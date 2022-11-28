@@ -40,6 +40,8 @@
 
 #include "driver/gpio.h"
 #include <dht11.h>
+#include <BH1750.h>
+
 
 extern "C" {
 	void app_main(void);
@@ -53,6 +55,14 @@ extern "C" {
 
 
 /*******************************************************************************
+ *  Sensors Setup
+ *
+ */
+
+#define BH1750_ADDR 0x23
+
+
+/*******************************************************************************
  *  LCD Setup
  *  Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
  */
@@ -61,8 +71,6 @@ extern "C" {
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
 
 /*******************************************************************************
  *  System Setup
@@ -82,7 +90,16 @@ static void stats_task(void*);
 static esp_err_t print_real_time_stats(TickType_t);
 void search_i2c(void);
 
+/*******************************************************************************
+ * Global Variables
+ */
 
+BH1750 lightMeter(0x23);
+static float  cLux = 0.0;
+static float cTemp = 0.0;
+static float cHumi = 0.0;
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 /*******************************************************************************
  *  App Main
  */
@@ -109,6 +126,12 @@ void app_main(void){
       printf("SSD1306 allocation failed");
       for(;;); // Don't proceed, loop forever
     }
+    //BH1750 Initialization
+    if(!lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire)){
+    	printf("BH1750 initialization failed!");
+    	for(;;); // Don't proceed, loop forever
+    }
+
 
     //Create business tasks
 	xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
@@ -137,6 +160,7 @@ static void vDHT11Task(void*){
 		printf("Temperature is %d \n", DHT11_read().temperature);
 		printf("Humidity is %d\n", DHT11_read().humidity);
 		printf("Status code is %d\n", DHT11_read().status);
+		printf("Light exposure is %F\n", lightMeter.readLightLevel());
 		vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
