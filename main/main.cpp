@@ -202,16 +202,6 @@ void app_main(void)
  */
 
 
-
-void displayInputText(String text){
-   display.setTextSize(1);
-   display.setCursor(3,1);
-   display.setTextColor(BLACK);
-   display.fillRect(0, 0, 100, 15, SSD1306_WHITE);
-   display.println(text);
-   display.display();
-}
-
 /***********************************************
  * I2C search
  */
@@ -292,21 +282,12 @@ static void vDisplayTask(void *arg)
 //
 //    testfilltriangle();  // Draw triangles (filled)
 
-    printf("Display characters\n");
-    displayInputText("Display characters\n");
-    vTaskDelay(pdMS_TO_TICKS(1000));
     testdrawchar();      // Draw characters of the default font
-    printf("Draw styles\n");
-    displayInputText("Draw styles\n");
-    vTaskDelay(pdMS_TO_TICKS(1000));
+
     testdrawstyles();    // Draw 'stylized' characters
-    printf("Scroll text\n");
-    displayInputText("Scroll text\n");
-    vTaskDelay(pdMS_TO_TICKS(1000));
+
     testscrolltext();    // Draw scrolling text
-    printf("Draw Bitmap\n");
-    displayInputText("Draw Bitmap\n");
-    vTaskDelay(pdMS_TO_TICKS(1000));
+
     testdrawbitmap();    // Draw a small bitmap image
 
     // Invert and restore display, pausing in-between
@@ -650,25 +631,19 @@ void testdrawchar(void) {
 }
 
 void testdrawstyles(void) {
-//  display.clearDisplay();
+  display.clearDisplay();
 
   display.setTextSize(1);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
+  display.println(F("Hello, world!"));
 
-  display.printf("Hello, world!");
-  display.printf("Hello, world!");
-  display.printf("Hello, world!");
-  display.println("Hello, world!");
-  display.println("Hello, world!");
-  display.println("Hello, world!");
-//
-//  display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
-//  display.println(3.141592);
-//
-//  display.setTextSize(2);             // Draw 2X-scale text
-//  display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
-//  display.print("0x"); display.println(0xDEADBEEF, HEX);
+  display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+  display.println(3.141592);
+
+  display.setTextSize(2);             // Draw 2X-scale text
+  display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+  display.print(F("0x")); display.println(0xDEADBEEF, HEX);
 
   display.display();
   vTaskDelay(pdMS_TO_TICKS(2000));
@@ -680,7 +655,7 @@ void testscrolltext(void) {
   display.setTextSize(2); // Draw 2X-scale text
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(10, 0);
-  display.println("scroll");
+  display.println(F("scroll"));
   display.display();      // Show initial text
   vTaskDelay(pdMS_TO_TICKS(100));
 
