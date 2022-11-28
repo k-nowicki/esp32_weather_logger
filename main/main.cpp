@@ -18,6 +18,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
+#include "driver/gpio.h"
+#include <dht11.h>
 
 extern "C" {
 	void app_main(void);
@@ -32,24 +34,22 @@ extern "C" {
 /*******************************************************************************
  *  LCD Setup
  */
-
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
-
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 // The pins for I2C are defined by the Wire-library.
 // On an arduino UNO:       A4(SDA), A5(SCL)
 // On an arduino MEGA 2560: 20(SDA), 21(SCL)
 // On an arduino LEONARDO:   2(SDA),  3(SCL), ...
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3D ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define NUMFLAKES     10 // Number of snowflakes in the animation example
 
 #define LOGO_HEIGHT   16
 #define LOGO_WIDTH    16
-static const unsigned char logo_bmp[] =
+static const unsigned char star_bmp[] =
 { 0b00000000, 0b11000000,
   0b00000001, 0b11000000,
   0b00000001, 0b11000000,
@@ -66,6 +66,24 @@ static const unsigned char logo_bmp[] =
   0b01111100, 0b11110000,
   0b01110000, 0b01110000,
   0b00000000, 0b00110000 };
+
+static const unsigned char logo_bmp[] =
+{ 0b00000011,0b11000000,
+  0b00000110,0b01100000,
+  0b00001101,0b10110000,
+  0b00001101,0b10110000,
+  0b00001110,0b01110000,
+  0b00001100,0b00110000,
+  0b00001100,0b00110000,
+  0b00001100,0b00110000,
+  0b00001100,0b00110000,
+  0b00001100,0b00110000,
+  0b01111100,0b00111110,
+  0b11100100,0b00100111,
+  0b11000000,0b00000011,
+  0b11000000,0b00000011,
+  0b01111000,0b00011110,
+  0b00000111,0b11100000 };
 
 int max(int num1, int num2);
 int min(int num1, int num2);
@@ -133,6 +151,7 @@ static void spin_task(void*);
 static void vDisplayTask(void*);
 static void stats_task(void*);
 
+void search_i2c(void);
 
 /*******************************************************************************
  *  App Main
@@ -144,12 +163,19 @@ void app_main(void)
 	initArduino();
 	Wire.setPins(I2C_SDA, I2C_SCL);
     //Allow other core to finish initialization
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(300));
 
-    if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+
+    if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3c)) {
       printf("SSD1306 allocation failed");
       for(;;); // Don't proceed, loop forever
     }
+
+
+//    search_i2c();
+
+
+    DHT11_init(GPIO_NUM_12);
 
     //Create semaphores to synchronize
     sync_spin_task = xSemaphoreCreateCounting(NUM_OF_SPIN_TASKS, 0);
@@ -175,6 +201,55 @@ void app_main(void)
  *
  */
 
+
+
+void displayInputText(String text){
+   display.setTextSize(1);
+   display.setCursor(3,1);
+   display.setTextColor(BLACK);
+   display.fillRect(0, 0, 100, 15, SSD1306_WHITE);
+   display.println(text);
+   display.display();
+}
+
+/***********************************************
+ * I2C search
+ */
+void search_i2c(void){
+	uint8_t error, address;
+	int nDevices;
+	printf("Scanning...");
+	nDevices = 0;
+	for (address = 1; address < 127; address++) {
+		// The i2c_scanner uses the return value of
+		// the Write.endTransmisstion to see if
+		// a device did acknowledge to the address.
+		Wire.beginTransmission(address);
+		error = Wire.endTransmission();
+		if (error == 0) {
+			printf("I2C device found at address 0x");
+			if (address < 16)
+				printf("0");
+//			printf(address, HEX);
+			printf("%02x\n", address);
+			printf(" !");
+			nDevices++;
+		}
+		else if (error == 4) {
+			printf("Unknown error at address 0x");
+			if (address < 16)
+				printf("0");
+			printf((const char *)&address, HEX);
+		}
+	}
+	if (nDevices == 0)
+		printf("No I2C devices found\n");
+	else
+		printf("done\n");
+	vTaskDelay(pdMS_TO_TICKS(2000)); // wait 2 seconds
+}
+
+
 static void spin_task(void *arg)
 {
     xSemaphoreTake(sync_spin_task, portMAX_DELAY);
@@ -193,36 +268,45 @@ static void vDisplayTask(void *arg)
     vTaskDelay(pdMS_TO_TICKS(2000));
     // Clear the buffer
     display.clearDisplay();
-    vTaskDelay(pdMS_TO_TICKS(2000));
+//    vTaskDelay(pdMS_TO_TICKS(2000));
     // display.display() is NOT necessary after every single drawing command,
     // unless that's what you want...rather, you can batch up a bunch of
     // drawing operations and then update the screen all at once by calling
     // display.display(). These examples demonstrate both approaches...
 
-    testdrawline();      // Draw many lines
+//    testdrawline();      // Draw many lines
+//
+//    testdrawrect();      // Draw rectangles (outlines)
+//
+//    testfillrect();      // Draw rectangles (filled)
+//
+//    testdrawcircle();    // Draw circles (outlines)
+//
+//    testfillcircle();    // Draw circles (filled)
+//
+//    testdrawroundrect(); // Draw rounded rectangles (outlines)
+//
+//    testfillroundrect(); // Draw rounded rectangles (filled)
+//
+//    testdrawtriangle();  // Draw triangles (outlines)
+//
+//    testfilltriangle();  // Draw triangles (filled)
 
-    testdrawrect();      // Draw rectangles (outlines)
-
-    testfillrect();      // Draw rectangles (filled)
-
-    testdrawcircle();    // Draw circles (outlines)
-
-    testfillcircle();    // Draw circles (filled)
-
-    testdrawroundrect(); // Draw rounded rectangles (outlines)
-
-    testfillroundrect(); // Draw rounded rectangles (filled)
-
-    testdrawtriangle();  // Draw triangles (outlines)
-
-    testfilltriangle();  // Draw triangles (filled)
-
+    printf("Display characters\n");
+    displayInputText("Display characters\n");
+    vTaskDelay(pdMS_TO_TICKS(1000));
     testdrawchar();      // Draw characters of the default font
-
+    printf("Draw styles\n");
+    displayInputText("Draw styles\n");
+    vTaskDelay(pdMS_TO_TICKS(1000));
     testdrawstyles();    // Draw 'stylized' characters
-
+    printf("Scroll text\n");
+    displayInputText("Scroll text\n");
+    vTaskDelay(pdMS_TO_TICKS(1000));
     testscrolltext();    // Draw scrolling text
-
+    printf("Draw Bitmap\n");
+    displayInputText("Draw Bitmap\n");
+    vTaskDelay(pdMS_TO_TICKS(1000));
     testdrawbitmap();    // Draw a small bitmap image
 
     // Invert and restore display, pausing in-between
@@ -252,6 +336,9 @@ static void stats_task(void *arg)
         } else {
             printf("Error getting real time stats\n");
         }
+        printf("Temperature is %d \n", DHT11_read().temperature);
+        printf("Humidity is %d\n", DHT11_read().humidity);
+        printf("Status code is %d\n", DHT11_read().status);
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
@@ -563,19 +650,25 @@ void testdrawchar(void) {
 }
 
 void testdrawstyles(void) {
-  display.clearDisplay();
+//  display.clearDisplay();
 
   display.setTextSize(1);             // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE);        // Draw white text
+  display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);        // Draw white text
   display.setCursor(0,0);             // Start at top-left corner
-  display.println(F("Hello, world!"));
 
-  display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
-  display.println(3.141592);
-
-  display.setTextSize(2);             // Draw 2X-scale text
-  display.setTextColor(SSD1306_WHITE);
-  display.print(F("0x")); display.println(0xDEADBEEF, HEX);
+  display.printf("Hello, world!");
+  display.printf("Hello, world!");
+  display.printf("Hello, world!");
+  display.println("Hello, world!");
+  display.println("Hello, world!");
+  display.println("Hello, world!");
+//
+//  display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+//  display.println(3.141592);
+//
+//  display.setTextSize(2);             // Draw 2X-scale text
+//  display.setTextColor(SSD1306_WHITE, SSD1306_BLACK);
+//  display.print("0x"); display.println(0xDEADBEEF, HEX);
 
   display.display();
   vTaskDelay(pdMS_TO_TICKS(2000));
@@ -587,7 +680,7 @@ void testscrolltext(void) {
   display.setTextSize(2); // Draw 2X-scale text
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(10, 0);
-  display.println(F("scroll"));
+  display.println("scroll");
   display.display();      // Show initial text
   vTaskDelay(pdMS_TO_TICKS(100));
 
