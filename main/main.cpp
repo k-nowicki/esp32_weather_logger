@@ -36,6 +36,7 @@
 #include <k_math.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Adafruit_BMP280.h>
 #include <Fonts/FreeSans9pt7b.h>
 
 #include "driver/gpio.h"
@@ -55,11 +56,16 @@ extern "C" {
 
 
 /*******************************************************************************
- *  Sensors Setup
+ *  I2C Bus Setup
+ *  (Most sensors and Display)
  *
  */
 
+#define OLED_ADDR	0x3c
 #define BH1750_ADDR 0x23
+#define DS3231_ADDR 0x57
+#define BMP280_ADDR 0x76
+
 
 
 /*******************************************************************************
@@ -94,10 +100,12 @@ void search_i2c(void);
  * Global Variables
  */
 
-BH1750 lightMeter(0x23);
+BH1750 lightMeter(BH1750_ADDR);
+Adafruit_BMP280 pressureMeter(&Wire); // I2C
 static float  cLux = 0.0;
 static float cTemp = 0.0;
 static float cHumi = 0.0;
+static float cPres = 0.0;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 /*******************************************************************************
@@ -106,12 +114,15 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 void app_main(void){
 	initArduino();
     //Allow other core to finish initialization
-    vTaskDelay(pdMS_TO_TICKS(200));
+    vTaskDelay(pdMS_TO_TICKS(10));
 
     //Set I2C interface
-	Wire.setPins(I2C_SDA, I2C_SCL);
+	Wire.begin(I2C_SDA, I2C_SCL);
+	vTaskDelay(pdMS_TO_TICKS(100));
+	printf("search_i2c...");
 
-    //search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
+    search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
+    vTaskDelay(pdMS_TO_TICKS(100));
 
     printf("GPIO's configuration...");
 	//Set GPIOS for DHT11 and DS18B20 as GPIOs
@@ -122,7 +133,8 @@ void app_main(void){
     printf("GPIO's configured!");
 
     //Setup OLED display
-    if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3c)) {
+    if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+	  display.display();
       printf("SSD1306 allocation failed");
       for(;;); // Don't proceed, loop forever
     }
@@ -131,7 +143,11 @@ void app_main(void){
     	printf("BH1750 initialization failed!");
     	for(;;); // Don't proceed, loop forever
     }
-
+    //BMP280 Initialization
+    if(!pressureMeter.begin(BMP280_ADDR)){
+    	printf("BMP280 initialization failed!");
+    	for(;;); // Don't proceed, loop forever
+    }
 
     //Create business tasks
 	xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
@@ -157,10 +173,13 @@ void app_main(void){
  */
 static void vDHT11Task(void*){
     while (1) {
-		printf("Temperature is %d \n", DHT11_read().temperature);
-		printf("Humidity is %d\n", DHT11_read().humidity);
+		printf("Temperature is %d °C\n", DHT11_read().temperature);
+		printf("Humidity is %d%%\n", DHT11_read().humidity);
 		printf("Status code is %d\n", DHT11_read().status);
-		printf("Light exposure is %F\n", lightMeter.readLightLevel());
+		printf("Light exposure is %6.2FLux\n", lightMeter.readLightLevel());
+		printf("Barometer Temperature is %3.2F°C\n", pressureMeter.readTemperature());
+		printf("Atmospheric pressure is %4.2f hPa\n", pressureMeter.readPressure()/100);
+		printf("Altitude is %5.2Fm\n", pressureMeter.readAltitude(1013.25));
 		vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
