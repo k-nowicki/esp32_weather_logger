@@ -14,6 +14,7 @@
 #include "freertos/semphr.h"
 #include "esp_err.h"
 #include <Wire.h>
+#include "driver/gpio.h"
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -28,27 +29,23 @@ extern "C" {
 #define I2C_SDA 14
 #define I2C_SCL 15
 
-
+#define GPIO_DHT11 GPIO_NUM_12
+#define GPIO_DS18B20 GPIO_NUM_16
 
 
 /*******************************************************************************
  *  LCD Setup
+ *  Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
  */
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-// The pins for I2C are defined by the Wire-library.
-// On an arduino UNO:       A4(SDA), A5(SCL)
-// On an arduino MEGA 2560: 20(SDA), 21(SCL)
-// On an arduino LEONARDO:   2(SDA),  3(SCL), ...
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
 #define NUMFLAKES     10 // Number of snowflakes in the animation example
 
 #define LOGO_HEIGHT   16
 #define LOGO_WIDTH    16
+
 static const unsigned char star_bmp[] =
 { 0b00000000, 0b11000000,
   0b00000001, 0b11000000,
@@ -85,11 +82,21 @@ static const unsigned char logo_bmp[] =
   0b01111000,0b00011110,
   0b00000111,0b11100000 };
 
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+
+/*******************************************************************************
+ * Extract to common.cpp
+ * Those functions are needed for LCD test functions
+ *
+ */
 int max(int num1, int num2);
 int min(int num1, int num2);
 
 /**
- * Find maximum between two numbers.
+ * @param num1
+ * @param num2
+ * @return Biggest of the two numbers
  */
 int max(int num1, int num2)
 {
@@ -97,18 +104,20 @@ int max(int num1, int num2)
 }
 
 /**
- * Find minimum between two numbers.
+ * @param num1
+ * @param num2
+ * @return Smallest of the two numbers
  */
 int min(int num1, int num2)
 {
     return (num1 > num2 ) ? num2 : num1;
 }
+/******************************************************************************/
 
 
-/**
+/*******************************************************************************
  * LCD high-level graphic function headers
  */
-
 
 void testdrawline();
 void testdrawrect(void);
@@ -132,50 +141,56 @@ void testanimate(const uint8_t *, uint8_t, uint8_t);
  *  Setup
  */
 
-
-
 #define NUM_OF_SPIN_TASKS   6
-#define SPIN_ITER           500000  //Actual CPU cycles used will depend on compiler optimization
+#define SPIN_ITER           5000  //Actual CPU cycles used will depend on compiler optimization
+
 #define SPIN_TASK_PRIO      3
-#define STATS_TASK_PRIO     4
+#define SENSORS_TASK_PRIO   4
 #define DISPLAY_TASK_PRIO   5
+#define STATS_TASK_PRIO     6
+
 #define STATS_TICKS         pdMS_TO_TICKS(1000)
 #define ARRAY_SIZE_OFFSET   5   //Increase this if print_real_time_stats returns ESP_ERR_INVALID_SIZE
 
-static char task_names[NUM_OF_SPIN_TASKS][configMAX_TASK_NAME_LEN];
 static SemaphoreHandle_t sync_spin_task;
 static SemaphoreHandle_t sync_stats_task;
 
 static esp_err_t print_real_time_stats(TickType_t);
 static void spin_task(void*);
+
+static void vDHT11Task(void*);
 static void vDisplayTask(void*);
 static void stats_task(void*);
 
 void search_i2c(void);
 
+
 /*******************************************************************************
  *  App Main
  */
-
-
-void app_main(void)
-{
+void app_main(void){
 	initArduino();
-	Wire.setPins(I2C_SDA, I2C_SCL);
     //Allow other core to finish initialization
-    vTaskDelay(pdMS_TO_TICKS(300));
+    vTaskDelay(pdMS_TO_TICKS(100));
 
+    //Set I2C interface
+	Wire.setPins(I2C_SDA, I2C_SCL);
 
+    //search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
+
+    printf("GPIO's configuration...");
+	//Set GPIOS for DHT11 and DS18B20 as GPIOs
+    PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DHT11], PIN_FUNC_GPIO);
+    PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DS18B20], PIN_FUNC_GPIO);
+    //Set up DHT11 GPIO
+    DHT11_init(GPIO_DHT11);
+    printf("GPIO's configured!");
+
+    //Setup OLED display
     if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3c)) {
       printf("SSD1306 allocation failed");
       for(;;); // Don't proceed, loop forever
     }
-
-
-//    search_i2c();
-
-
-    DHT11_init(GPIO_NUM_12);
 
     //Create semaphores to synchronize
     sync_spin_task = xSemaphoreCreateCounting(NUM_OF_SPIN_TASKS, 0);
@@ -184,14 +199,15 @@ void app_main(void)
     //Create tasks
 
 
-	xTaskCreatePinnedToCore(spin_task, task_names[1], 1024, NULL, SPIN_TASK_PRIO, NULL, tskNO_AFFINITY);
+	xTaskCreatePinnedToCore(spin_task, "SPIN", 1024, NULL, SPIN_TASK_PRIO, NULL, tskNO_AFFINITY);
 
-	xTaskCreatePinnedToCore( vDisplayTask, "Display", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
+	xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 512, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
+	xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
 
 
 
     //Create and start stats task
-    xTaskCreatePinnedToCore(stats_task, "stats", 4096, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);
+    xTaskCreatePinnedToCore(stats_task, "STATS", 4096, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);
     xSemaphoreGive(sync_stats_task);
 }
 
@@ -240,20 +256,20 @@ void search_i2c(void){
 }
 
 
-static void spin_task(void *arg)
-{
+static void spin_task(void *arg){
     xSemaphoreTake(sync_spin_task, portMAX_DELAY);
     while (1) {
         //Consume CPU cycles
         for (int i = 0; i < SPIN_ITER; i++) {
             __asm__ __volatile__("NOP");
         }
-        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
-static void vDisplayTask(void *arg)
-{
+static void vDHT11Task(void*);
+
+
+static void vDisplayTask(void *arg){
     display.display();
     vTaskDelay(pdMS_TO_TICKS(2000));
     // Clear the buffer
@@ -300,8 +316,7 @@ static void vDisplayTask(void *arg)
     vTaskDelay(pdMS_TO_TICKS(10000));
 }
 
-static void stats_task(void *arg)
-{
+static void stats_task(void *arg){
     xSemaphoreTake(sync_stats_task, portMAX_DELAY);
 
     //Start all the spin tasks
@@ -348,8 +363,7 @@ static void stats_task(void *arg)
  *  - ESP_ERR_INVALID_SIZE  Insufficient array size for uxTaskGetSystemState. Trying increasing ARRAY_SIZE_OFFSET
  *  - ESP_ERR_INVALID_STATE Delay duration too short
  */
-static esp_err_t print_real_time_stats(TickType_t xTicksToWait)
-{
+static esp_err_t print_real_time_stats(TickType_t xTicksToWait){
     TaskStatus_t *start_array = NULL, *end_array = NULL;
     UBaseType_t start_array_size, end_array_size;
     uint32_t start_run_time, end_run_time, total_elapsed_time;
