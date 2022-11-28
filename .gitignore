@@ -2,3 +2,5 @@
 .project
 .settings
 build/
+main/display_helper.cpp
+main/display_helper.h
