@@ -89,6 +89,7 @@ extern "C" {
 #define STATS_TICKS         pdMS_TO_TICKS(1000)
 #define ARRAY_SIZE_OFFSET   5   //Increase this if print_real_time_stats returns ESP_ERR_INVALID_SIZE
 
+static void vSensorsTask(void*);
 static void vDHT11Task(void*);
 static void vDisplayTask(void*);
 static void stats_task(void*);
@@ -102,10 +103,12 @@ void search_i2c(void);
 
 BH1750 lightMeter(BH1750_ADDR);
 Adafruit_BMP280 pressureMeter(&Wire); // I2C
-static float  cLux = 0.0;
-static float cTemp = 0.0;
-static float cHumi = 0.0;
-static float cPres = 0.0;
+static volatile float  cLux = 0.0;	//global current value of light exposure (BH1750)
+static volatile float iTemp = 0.0;	//global current value of internal temperature (BMP280)
+static volatile float eTemp = 0.0;	//global current value of external temperature (DS18B20 or DHT11)
+static volatile float cHumi = 0.0;	//global current value of humidity (DHT11)
+static volatile float cPres = 0.0;	//global current value of atm. pressure (BPM280)
+static volatile float cAlti = 0.0;	//global current value of altitude (BMP280, calculated)
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 /*******************************************************************************
@@ -150,7 +153,8 @@ void app_main(void){
     }
 
     //Create business tasks
-	xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
+    xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
+    xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
 	xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
 
 
@@ -167,19 +171,51 @@ void app_main(void){
 
 
 /**
- * @brief Task responsible for reading DHT11 sensor
+ * @brief Task responsible for reading all sensors
  *
  * @param arg
  */
-static void vDHT11Task(void*){
+static void vSensorsTask(void*){
+	int dht_temp = 0;
+	int dht_status = 0;
     while (1) {
-		printf("Temperature is %d °C\n", DHT11_read().temperature);
-		printf("Humidity is %d%%\n", DHT11_read().humidity);
-		printf("Status code is %d\n", DHT11_read().status);
-		printf("Light exposure is %6.2FLux\n", lightMeter.readLightLevel());
-		printf("Barometer Temperature is %3.2F°C\n", pressureMeter.readTemperature());
-		printf("Atmospheric pressure is %4.2f hPa\n", pressureMeter.readPressure()/100);
-		printf("Altitude is %5.2Fm\n", pressureMeter.readAltitude(1013.25));
+    	// Read all sensors
+    	cLux = lightMeter.readLightLevel();
+    	dht_temp = DHT11_read().temperature;
+    	dht_status = DHT11_read().status;
+    	cHumi = DHT11_read().humidity;
+    	iTemp = pressureMeter.readTemperature();
+    	cPres = pressureMeter.readPressure()/100;
+    	cAlti = pressureMeter.readAltitude(1013.25);
+    	//print on UART
+		printf("DHT Temperature is %d °C\n", eTemp);
+		printf("DHT Humidity is %d %%\n", (int)cHumi);
+		printf("DHT Status code is %d\n", dht_status);
+		printf("BH1 Light exposure is %6.2F Lux\n", cLux);
+		printf("BMP Barometer Temperature is %3.2F °C\n", iTemp);
+		printf("BMP Atmospheric pressure is %4.2f hPa\n", cPres);
+		printf("BMP Altitude is %5.2F m\n", cAlti);
+		vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+/**
+ * @brief Task responsible for reading all sensors
+ *
+ * @param arg
+ *
+ * Task needed, because DHT11 needs some times more than 2seconds to take measurements
+ * When this was
+ */
+static void vDHT11Task(void*){
+	int dht_status = DHT11_TIMEOUT_ERROR;
+    while (1) {
+    	// Read
+    	dht_status = DHT11_read().status;
+    	if(dht_status==DHT11_OK){
+			eTemp = DHT11_read().temperature;
+			cHumi = DHT11_read().humidity;
+    	}
 		vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
@@ -193,20 +229,37 @@ static void vDisplayTask(void *arg){
 	display.display();
 	printf("Display: Logo Displayed!");
 	vTaskDelay(pdMS_TO_TICKS(200));
+	display.clearDisplay();
+	display.setTextSize(1);      // Normal 1:1 pixel scale
+	display.setTextColor(SSD1306_WHITE); // Draw white text
+	display.setCursor(0, 10);     // Start at top-left corner
+	display.cp437(true);         // Use full 256 char 'Code Page 437' font
+	display.setFont(&FreeSans9pt7b);
+
+	display.println("Weather Station V 1.0");
+	display.setFont();
+	display.println("by KNowicki @ 2022");
+	display.display();
 	while(1){
+
+		vTaskDelay(pdMS_TO_TICKS(200));
 		display.clearDisplay();
-		display.setTextSize(1);      // Normal 1:1 pixel scale
-		display.setTextColor(SSD1306_WHITE); // Draw white text
-		display.setCursor(0, 10);     // Start at top-left corner
-		display.cp437(true);         // Use full 256 char 'Code Page 437' font
-		display.setFont(&FreeSans9pt7b);
+		display.setCursor(0, 0);     // Start at top-left corner
 
-		display.println("Weather Station V 1.0");
-
-		display.setFont();
-		display.println("by KNowicki @ 2022");
+		display.printf("Internal T: %3.2F %cC\n", iTemp,'\xF8');
+		display.printf("External T: %3.2F %cC\n", eTemp,'\xF8');
+		display.printf("Humidity: %d%%\n", (int)cHumi);
+		display.printf("Light exp: %6.2FLux\n", cLux);
+		display.printf("Pressure: %4.2f hPa\n", cPres);
+		display.printf("Altitude: %5.2Fm\n", cAlti);
 		display.display();
-		vTaskDelay(pdMS_TO_TICKS(2000));
+//    	cLux = lightMeter.readLightLevel();
+//    	dht_temp = DHT11_read().temperature;
+//    	dht_status = DHT11_read().status;
+//    	cHumi = DHT11_read().humidity;
+//    	iTemp = pressureMeter.readTemperature();
+//    	cPres = pressureMeter.readPressure()/100;
+//    	cAlti = pressureMeter.readAltitude(1013.25);
 	}
 }
 
