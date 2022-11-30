@@ -176,19 +176,19 @@ void app_main(void){
  * @param arg
  */
 static void vSensorsTask(void*){
-	int dht_temp = 0;
+//	int dht_temp = 0;
 	int dht_status = 0;
     while (1) {
     	// Read all sensors
     	cLux = lightMeter.readLightLevel();
-    	dht_temp = DHT11_read().temperature;
+//    	dht_temp = DHT11_read().temperature;
     	dht_status = DHT11_read().status;
     	cHumi = DHT11_read().humidity;
     	iTemp = pressureMeter.readTemperature();
     	cPres = pressureMeter.readPressure()/100;
     	cAlti = pressureMeter.readAltitude(1013.25);
     	//print on UART
-		printf("DHT Temperature is %d °C\n", eTemp);
+		printf("DHT Temperature is %d °C\n", (int)eTemp);
 		printf("DHT Humidity is %d %%\n", (int)cHumi);
 		printf("DHT Status code is %d\n", dht_status);
 		printf("BH1 Light exposure is %6.2F Lux\n", cLux);
