@@ -24,97 +24,55 @@
  *  SOFTWARE.
 */
 
+//System
 #include <stdio.h>
 #include <stdlib.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "esp_err.h"
-#include <Wire.h>
+//Peripherals and libs
 #include "driver/gpio.h"
-
+#include <Wire.h>
 #include <k_math.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_BMP280.h>
 #include <Fonts/FreeSans9pt7b.h>
-
-#include "driver/gpio.h"
 #include <dht11.h>
 #include <BH1750.h>
+//App
+#include "setup.h"
+#include "app.h"
 
 
 extern "C" {
 	void app_main(void);
 }
 
-#define I2C_SDA 14
-#define I2C_SCL 15
-
-#define GPIO_DHT11 GPIO_NUM_13
-#define GPIO_DS18B20 GPIO_NUM_16
 
 
 /*******************************************************************************
- *  I2C Bus Setup
- *  (Most sensors and Display)
- *
+ * Variable definitions
  */
 
-#define OLED_ADDR	0x3c
-#define BH1750_ADDR 0x23
-#define DS3231_ADDR 0x57
-#define BMP280_ADDR 0x76
 
 
-
-/*******************************************************************************
- *  LCD Setup
- *  Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
- */
-
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-
-/*******************************************************************************
- *  System Setup
- */
-
-#define SENSORS_TASK_PRIO   4
-#define DISPLAY_TASK_PRIO   5
-#define STATS_TASK_PRIO     6
-
-#define STATS_TICKS         pdMS_TO_TICKS(1000)
-#define ARRAY_SIZE_OFFSET   5   //Increase this if print_real_time_stats returns ESP_ERR_INVALID_SIZE
-
-static void vSensorsTask(void*);
-static void vDHT11Task(void*);
-static void vDisplayTask(void*);
-static void stats_task(void*);
-
-static esp_err_t print_real_time_stats(TickType_t);
-void search_i2c(void);
-
-/*******************************************************************************
- * Global Variables
- */
-
+//Sensor global objects
 BH1750 lightMeter(BH1750_ADDR);
 Adafruit_BMP280 pressureMeter(&Wire); // I2C
-static volatile float  cLux = 0.0;	//global current value of light exposure (BH1750)
-static volatile float iTemp = 0.0;	//global current value of internal temperature (BMP280)
-static volatile float eTemp = 0.0;	//global current value of external temperature (DS18B20 or DHT11)
-static volatile float cHumi = 0.0;	//global current value of humidity (DHT11)
-static volatile float cPres = 0.0;	//global current value of atm. pressure (BPM280)
-static volatile float cAlti = 0.0;	//global current value of altitude (BMP280, calculated)
-
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+
+
 /*******************************************************************************
  *  App Main
  */
 void app_main(void){
+	//create semaphores
+	current_measuers_mutex = xSemaphoreCreateMutex();
+	uart_mutex = xSemaphoreCreateMutex();
+
 	initArduino();
     //Allow other core to finish initialization
     vTaskDelay(pdMS_TO_TICKS(10));
@@ -127,13 +85,13 @@ void app_main(void){
     search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    printf("GPIO's configuration...");
+    printf("GPIO's configuration...\n");
 	//Set GPIOS for DHT11 and DS18B20 as GPIOs
     PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DHT11], PIN_FUNC_GPIO);
     PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DS18B20], PIN_FUNC_GPIO);
     //Set up DHT11 GPIO
     DHT11_init(GPIO_DHT11);
-    printf("GPIO's configured!");
+    printf("GPIO's configured!\n");
 
     //Setup OLED display
     if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
@@ -157,8 +115,6 @@ void app_main(void){
     xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
 	xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
 
-
-
     //Create and start stats task
     xTaskCreatePinnedToCore(stats_task, "STATS", 2048, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);
 }
@@ -176,25 +132,29 @@ void app_main(void){
  * @param arg
  */
 static void vSensorsTask(void*){
-//	int dht_temp = 0;
+	measurement tmp_measurements;
 	int dht_status = 0;
     while (1) {
     	// Read all sensors
-    	cLux = lightMeter.readLightLevel();
-//    	dht_temp = DHT11_read().temperature;
-    	dht_status = DHT11_read().status;
-    	cHumi = DHT11_read().humidity;
-    	iTemp = pressureMeter.readTemperature();
-    	cPres = pressureMeter.readPressure()/100;
-    	cAlti = pressureMeter.readAltitude(1013.25);
+    	tmp_measurements.lux = lightMeter.readLightLevel();
+    	tmp_measurements.iTemp = pressureMeter.readTemperature();
+    	tmp_measurements.pres = pressureMeter.readPressure()/100;
+    	tmp_measurements.alti = pressureMeter.readAltitude(1013.25);
+		dht_status = DHT11_read().status;
+		//Store them in global curr_measures (but without dht11 measures)
+		store_measurements(tmp_measurements);
     	//print on UART
-		printf("DHT Temperature is %d °C\n", (int)eTemp);
-		printf("DHT Humidity is %d %%\n", (int)cHumi);
+		xSemaphoreTake(uart_mutex, portMAX_DELAY);
+
+		printf("DHT Temperature is %d °C\n", (int)tmp_measurements.eTemp);
+		printf("DHT Humidity is %d %%\n", (int)tmp_measurements.humi);
 		printf("DHT Status code is %d\n", dht_status);
-		printf("BH1 Light exposure is %6.2F Lux\n", cLux);
-		printf("BMP Barometer Temperature is %3.2F °C\n", iTemp);
-		printf("BMP Atmospheric pressure is %4.2f hPa\n", cPres);
-		printf("BMP Altitude is %5.2F m\n", cAlti);
+		printf("BH1 Light exposure is %6.2F Lux\n", tmp_measurements.lux);
+		printf("BMP Barometer Temperature is %3.2F °C\n", tmp_measurements.iTemp);
+		printf("BMP Atmospheric pressure is %4.2f hPa\n", tmp_measurements.pres);
+		printf("BMP Altitude is %5.2F m\n", tmp_measurements.alti);
+		printf("=========================================\n\n");
+		xSemaphoreGive(uart_mutex);
 		vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
@@ -208,15 +168,22 @@ static void vSensorsTask(void*){
  * When this was
  */
 static void vDHT11Task(void*){
+	measurement tmp_measurements;
 	int dht_status = DHT11_TIMEOUT_ERROR;
     while (1) {
     	// Read
     	dht_status = DHT11_read().status;
     	if(dht_status==DHT11_OK){
-			eTemp = DHT11_read().temperature;
-			cHumi = DHT11_read().humidity;
+    		//make the reads from DHT11
+    		tmp_measurements.eTemp = DHT11_read().temperature;
+    		tmp_measurements.humi = DHT11_read().humidity;
+    		//store them in curr)measures
+    		xSemaphoreTake(current_measuers_mutex, portMAX_DELAY);
+    		curr_measures.eTemp = tmp_measurements.eTemp;
+			curr_measures.humi = tmp_measurements.humi;
+    		xSemaphoreGive(current_measuers_mutex);
     	}
-		vTaskDelay(pdMS_TO_TICKS(1000));
+		vTaskDelay(pdMS_TO_TICKS(400));
     }
 }
 
@@ -226,8 +193,8 @@ static void vDHT11Task(void*){
  * @param arg
  */
 static void vDisplayTask(void *arg){
+	measurement tmp_measurements;
 	display.display();
-	printf("Display: Logo Displayed!");
 	vTaskDelay(pdMS_TO_TICKS(200));
 	display.clearDisplay();
 	display.setTextSize(1);      // Normal 1:1 pixel scale
@@ -240,28 +207,23 @@ static void vDisplayTask(void *arg){
 	display.setFont();
 	display.println("by KNowicki @ 2022");
 	display.display();
+	vTaskDelay(pdMS_TO_TICKS(1000));
 	while(1){
-
 		vTaskDelay(pdMS_TO_TICKS(200));
 		display.clearDisplay();
 		display.setCursor(0, 0);     // Start at top-left corner
+		tmp_measurements = get_latest_measurements();	//safely read current values
+		display.printf("Intern T: %3.2F %cC\n", tmp_measurements.iTemp,'\xF8');
+		display.printf("Extern T: %3.2F %cC\n", tmp_measurements.eTemp,'\xF8');
+		display.printf("Humidity: %d%%\n", (int)tmp_measurements.humi);
+		display.printf("Sun expo: %6.2FLux\n", tmp_measurements.lux);
+		display.printf("Pressure: %4.2f hPa\n", tmp_measurements.pres);
+		display.printf("Altitude: %5.2Fm\n", tmp_measurements.alti);
 
-		display.printf("Internal T: %3.2F %cC\n", iTemp,'\xF8');
-		display.printf("External T: %3.2F %cC\n", eTemp,'\xF8');
-		display.printf("Humidity: %d%%\n", (int)cHumi);
-		display.printf("Light exp: %6.2FLux\n", cLux);
-		display.printf("Pressure: %4.2f hPa\n", cPres);
-		display.printf("Altitude: %5.2Fm\n", cAlti);
 		display.display();
-//    	cLux = lightMeter.readLightLevel();
-//    	dht_temp = DHT11_read().temperature;
-//    	dht_status = DHT11_read().status;
-//    	cHumi = DHT11_read().humidity;
-//    	iTemp = pressureMeter.readTemperature();
-//    	cPres = pressureMeter.readPressure()/100;
-//    	cAlti = pressureMeter.readAltitude(1013.25);
 	}
 }
+
 
 /**
  * @brief Task responsible for communicating System Real Time Statistics at UART Debug port
@@ -271,12 +233,16 @@ static void vDisplayTask(void *arg){
 static void stats_task(void *arg){
     //Print real time stats periodically
     while (1) {
-        printf("\n\nGetting real time stats over %d ticks\n", STATS_TICKS);
+    	xSemaphoreTake(uart_mutex, portMAX_DELAY);
+    	printf("\n\n=========================================\n");
+    	printf("Getting real time stats over %d ticks\n", STATS_TICKS);
         if (print_real_time_stats(STATS_TICKS) == ESP_OK) {
             printf("Real time stats obtained\n");
         } else {
             printf("Error getting real time stats\n");
         }
+        printf("-----------------------------------------\n\n");
+        xSemaphoreGive(uart_mutex);
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
@@ -287,6 +253,30 @@ static void stats_task(void *arg){
  *
  */
 
+/**
+ * curr_measures are global variable used in many tasks. That is why it needs to
+ * be protected against changing value in the middle of writing/reading.
+ * @return Copy of curr_measures done under mutex control.
+ */
+measurement get_latest_measurements(void){
+	measurement last_measures;
+	xSemaphoreTake(current_measuers_mutex, portMAX_DELAY);
+	last_measures = curr_measures;	//safely read current values
+	xSemaphoreGive(current_measuers_mutex);
+	return last_measures;
+}
+/**
+ * Save given measurements to global curr_measures variable
+ * @param measures Measurements to store
+ */
+void store_measurements(measurement measures){
+	xSemaphoreTake(current_measuers_mutex, portMAX_DELAY);
+	curr_measures.lux = measures.lux;
+	curr_measures.iTemp = measures.iTemp;
+	curr_measures.pres = measures.pres;
+	curr_measures.alti = measures.alti;
+	xSemaphoreGive(current_measuers_mutex);
+}
 
 /**
  * @brief   Function to print the CPU usage of tasks over a given duration.
@@ -403,7 +393,7 @@ exit:    //Common return path
 void search_i2c(void){
 	uint8_t error, address;
 	int nDevices;
-	printf("Scanning...");
+	printf("Scanning...\n");
 	nDevices = 0;
 	for (address = 1; address < 127; address++) {
 		// The i2c_scanner uses the return value of
@@ -412,25 +402,24 @@ void search_i2c(void){
 		Wire.beginTransmission(address);
 		error = Wire.endTransmission();
 		if (error == 0) {
-			printf("I2C device found at address 0x");
+			printf(" -I2C device found at address 0x");
 			if (address < 16)
 				printf("0");
 //			printf(address, HEX);
 			printf("%02x\n", address);
-			printf(" !");
 			nDevices++;
 		}
 		else if (error == 4) {
-			printf("Unknown error at address 0x");
+			printf(" -Unknown error at address 0x");
 			if (address < 16)
 				printf("0");
 			printf((const char *)&address, HEX);
 		}
 	}
 	if (nDevices == 0)
-		printf("No I2C devices found\n");
+		printf(" -No I2C devices found\n");
 	else
-		printf("done\n");
+		printf("Done I2C scanning!\n");
 	vTaskDelay(pdMS_TO_TICKS(2000)); // wait 2 seconds
 }
 
