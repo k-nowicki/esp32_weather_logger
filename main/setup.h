@@ -54,7 +54,7 @@
 #define DISPLAY_TASK_PRIO   5
 #define STATS_TASK_PRIO     6
 
-#define STATS_TICKS         pdMS_TO_TICKS(1)	//generate stats immediately (1ms)
+#define STATS_TICKS         pdMS_TO_TICKS(1000)	//generate stats immediately (1ms)
 #define ARRAY_SIZE_OFFSET   5   //Increase this if print_real_time_stats returns ESP_ERR_INVALID_SIZE
 
 

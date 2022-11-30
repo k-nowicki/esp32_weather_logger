@@ -25,6 +25,7 @@ struct measurement{
 	float humi = 0.0;	//humidity (DHT11)
 	float pres = 0.0;	//atm. pressure (BPM280)
 	float alti = 0.0;	//altitude (BMP280, calculated)
+	int dht_status = 0; //dht last_measurement status
 };
 
 //Business logic global variables

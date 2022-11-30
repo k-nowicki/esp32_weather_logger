@@ -72,18 +72,15 @@ void app_main(void){
 	//create semaphores
 	current_measuers_mutex = xSemaphoreCreateMutex();
 	uart_mutex = xSemaphoreCreateMutex();
-
-	initArduino();
+	//
+	//initArduino();
     //Allow other core to finish initialization
     vTaskDelay(pdMS_TO_TICKS(10));
 
     //Set I2C interface
 	Wire.begin(I2C_SDA, I2C_SCL);
-	vTaskDelay(pdMS_TO_TICKS(100));
 	printf("search_i2c...");
-
     search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
-    vTaskDelay(pdMS_TO_TICKS(100));
 
     printf("GPIO's configuration...\n");
 	//Set GPIOS for DHT11 and DS18B20 as GPIOs
@@ -127,40 +124,26 @@ void app_main(void){
 
 
 /**
- * @brief Task responsible for reading all sensors
+ * @brief Task responsible for reading all fast sensors
  *
  * @param arg
  */
 static void vSensorsTask(void*){
 	measurement tmp_measurements;
-	int dht_status = 0;
     while (1) {
-    	// Read all sensors
+    	// Read all fast sensors
     	tmp_measurements.lux = lightMeter.readLightLevel();
     	tmp_measurements.iTemp = pressureMeter.readTemperature();
     	tmp_measurements.pres = pressureMeter.readPressure()/100;
     	tmp_measurements.alti = pressureMeter.readAltitude(1013.25);
-		dht_status = DHT11_read().status;
-		//Store them in global curr_measures (but without dht11 measures)
-		store_measurements(tmp_measurements);
-    	//print on UART
-		xSemaphoreTake(uart_mutex, portMAX_DELAY);
+		store_measurements(tmp_measurements); 	//Store in global curr_measures
 
-		printf("DHT Temperature is %d °C\n", (int)tmp_measurements.eTemp);
-		printf("DHT Humidity is %d %%\n", (int)tmp_measurements.humi);
-		printf("DHT Status code is %d\n", dht_status);
-		printf("BH1 Light exposure is %6.2F Lux\n", tmp_measurements.lux);
-		printf("BMP Barometer Temperature is %3.2F °C\n", tmp_measurements.iTemp);
-		printf("BMP Atmospheric pressure is %4.2f hPa\n", tmp_measurements.pres);
-		printf("BMP Altitude is %5.2F m\n", tmp_measurements.alti);
-		printf("=========================================\n\n");
-		xSemaphoreGive(uart_mutex);
-		vTaskDelay(pdMS_TO_TICKS(1000));
+		vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
 /**
- * @brief Task responsible for reading all sensors
+ * @brief Task responsible for reading DHT11 extremely slow sensor
  *
  * @param arg
  *
@@ -169,21 +152,23 @@ static void vSensorsTask(void*){
  */
 static void vDHT11Task(void*){
 	measurement tmp_measurements;
-	int dht_status = DHT11_TIMEOUT_ERROR;
+	dht11_reading dht_read;
     while (1) {
-    	// Read
-    	dht_status = DHT11_read().status;
-    	if(dht_status==DHT11_OK){
-    		//make the reads from DHT11
-    		tmp_measurements.eTemp = DHT11_read().temperature;
-    		tmp_measurements.humi = DHT11_read().humidity;
-    		//store them in curr)measures
-    		xSemaphoreTake(current_measuers_mutex, portMAX_DELAY);
-    		curr_measures.eTemp = tmp_measurements.eTemp;
-			curr_measures.humi = tmp_measurements.humi;
-    		xSemaphoreGive(current_measuers_mutex);
+    	dht_read = DHT11_read();
+    	//update status of last read
+		tmp_measurements.dht_status = dht_read.status;
+    	if(dht_read.status==DHT11_OK){
+    		//update measurements only when reads OK
+    		tmp_measurements.eTemp = dht_read.temperature;
+    		tmp_measurements.humi = dht_read.humidity;
     	}
-		vTaskDelay(pdMS_TO_TICKS(400));
+		//store measurements in curr_measures
+		xSemaphoreTake(current_measuers_mutex, portMAX_DELAY);
+		curr_measures.eTemp = tmp_measurements.eTemp;
+		curr_measures.humi = tmp_measurements.humi;
+		curr_measures.dht_status = tmp_measurements.dht_status;
+		xSemaphoreGive(current_measuers_mutex);
+		vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
@@ -209,7 +194,7 @@ static void vDisplayTask(void *arg){
 	display.display();
 	vTaskDelay(pdMS_TO_TICKS(1000));
 	while(1){
-		vTaskDelay(pdMS_TO_TICKS(200));
+		vTaskDelay(pdMS_TO_TICKS(100));
 		display.clearDisplay();
 		display.setCursor(0, 0);     // Start at top-left corner
 		tmp_measurements = get_latest_measurements();	//safely read current values
@@ -219,31 +204,45 @@ static void vDisplayTask(void *arg){
 		display.printf("Sun expo: %6.2FLux\n", tmp_measurements.lux);
 		display.printf("Pressure: %4.2f hPa\n", tmp_measurements.pres);
 		display.printf("Altitude: %5.2Fm\n", tmp_measurements.alti);
-
 		display.display();
 	}
 }
 
 
 /**
- * @brief Task responsible for communicating System Real Time Statistics at UART Debug port
+ * @brief Task responsible for communicating at UART Debug port:
+ * 		  - System Real Time Statistics
+ * 		  - Current Measurements
+ * 		  - Current system Time		[not yet implemented]
+ * 		  - Current system state	[not yet implemented]
+ * 		  - Web Server requests? 	[not yet implemented]
  *
  * @param arg
  */
 static void stats_task(void *arg){
-    //Print real time stats periodically
+	measurement tmp_measurements;
+	int stats_error;
+    //Print real time stats and measurements periodically
     while (1) {
-    	xSemaphoreTake(uart_mutex, portMAX_DELAY);
-    	printf("\n\n=========================================\n");
-    	printf("Getting real time stats over %d ticks\n", STATS_TICKS);
-        if (print_real_time_stats(STATS_TICKS) == ESP_OK) {
+    	stats_error = print_real_time_stats(STATS_TICKS);	//this takes STATS_TICKS ms when it is counting
+    	tmp_measurements = get_latest_measurements();
+    	xSemaphoreTake(uart_mutex, portMAX_DELAY);			//take UART port
+        if (stats_error == ESP_OK) {
             printf("Real time stats obtained\n");
         } else {
             printf("Error getting real time stats\n");
         }
-        printf("-----------------------------------------\n\n");
-        xSemaphoreGive(uart_mutex);
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        printf("-----------------------------------------\n");
+		printf("Current measurements:\n");
+		printf("DHT Temperature:   %d °C\n", (int)tmp_measurements.eTemp);
+		printf("DHT Humidity:      %d %%\n", (int)tmp_measurements.humi);
+		printf("DHT Status code:   %d\n", tmp_measurements.dht_status);
+		printf("BH1750 Light exp:  %6.2F Lux\n", tmp_measurements.lux);
+		printf("BMP Temperature:   %3.2F °C\n", tmp_measurements.iTemp);
+		printf("BMP Atm. pressure: %4.2f hPa\n", tmp_measurements.pres);
+		printf("BMP Altitude:      %5.2F m\n", tmp_measurements.alti);
+		printf("=========================================\n\n");
+		xSemaphoreGive(uart_mutex);							//give back UART port
     }
 }
 
@@ -343,7 +342,10 @@ static esp_err_t print_real_time_stats(TickType_t xTicksToWait){
         ret = ESP_ERR_INVALID_STATE;
         goto exit;
     }
-
+    //lock the UART to not interrupt printing
+    xSemaphoreTake(uart_mutex, portMAX_DELAY);
+    printf("Real time stats over %d ticks\n", xTicksToWait);
+    printf("-----------------------------------------\n");
     printf("| Task | Run Time | Percentage\n");
     //Match each task in start_array to those in the end_array
     for (int i = 0; i < start_array_size; i++) {
@@ -376,6 +378,7 @@ static esp_err_t print_real_time_stats(TickType_t xTicksToWait){
             printf("| %s | Created\n", end_array[i].pcTaskName);
         }
     }
+    xSemaphoreGive(uart_mutex);
     ret = ESP_OK;
 
 exit:    //Common return path
