@@ -1,72 +1,31 @@
-# FreeRTOS Real Time Stats Example
+# Weather Station and logger based on ESP32
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+The Weather Station measures Temperature, Humidity, Atm Pressure and Solar exposure. It also keeps track of current date and time and take pictures. All those informations are displayed (excluding pictures) in real time on the device display, and can also be viewed by the web intreface.
+All user interactions are made by web interface. Besides display and on/off switch, the device has no other way to communicate with user.
+The purpose of the device is to deliver historical weather informations along with pictures of those conditions, for further analysis.
+Device can be used as weather conditions logger, time-lapse camera or just home weather station.
 
-FreeRTOS provides the function `vTaskGetRunTimeStats()` to obtain CPU usage statistics of tasks. However, these statistics are with respect to the entire runtime of FreeRTOS (i.e. **run time stats**). Furthermore, statistics of `vTaskGetRunTimeStats()` are only valid whilst the timer for run time statistics has not overflowed.
+## Hardware
 
-This example demonstrates how to get CPU usage statistics of tasks with respect to a specified duration (i.e. **real time stats**) rather than over the entire runtime of FreeRTOS. The `print_real_time_stats()` function of this example demonstrates how this can be achieved.
+|  Type | Name  | Main Link  | Reserve link  | Libs  |
+| ------------ | ------------ | ------------ | ------------ | ------------ |
+| MCU  | ESP32-CAM  | https://docs.platformio.org/en/latest/boards/espressif32/esp32cam.html  |   | ESP-IDF  |
+| Humidity  | DHT11  | http://gotronik.pl/img/dht11.pdf  |   | Anacron-mb/esp32-DHT11  |
+| Temperature  |DS18B20   |https://datasheets.maximintegrated.com/en/ds/DS18B20.pdf   |   |   |
+| Pressure  |BMP280   | https://www.bosch-sensortec.com/products/environmental-sensors/pressure-sensors/bmp280/  |   | Adafruit_BMP280_Library Adafruit_Sensor Adafruit_BusIO; arduino |
+|Light   |BH1750   |https://www.handsontec.com/dataspecs/sensor/BH1750%20Light%20Sensor.pdf   |   | claws/BH1750; arduino  |
+|OLED |GME12864-41/ SSD1306   | https://nettigo.pl/products/wyswietlacz-oled-0-96-i2c-128x64-ssd1306-bialy  | https://datasheethub.com/ssd1306-128x64-mono-0-96-inch-i2c-oled-display/  |Adafruit_SSD1306; Adafruit-GFX-Library; arduino |
+RTC | HW084 / DS3231 | http://www.szhwmake.com/prod_view.aspx?TypeId=83&Id=350&FId=t3:83:3 | https://lastminuteengineers.com/ds3231-rtc-arduino-tutorial/ | |
 
-## How to use example
+## Connections
+<img src="https://i.imgur.com/I4ykYDd.png" alt="Connections" width="80%"/>
 
-### Hardware Required
-
-This example should be able to run on any commonly available ESP32 development board.
-
-### Configure the project
-
-```
-idf.py menuconfig
-```
-
-* Select `Enable FreeRTOS to collect run time stats` under `Component Config > FreeRTOS` (this should be enabled in the example by default)
-
-* `Choose the clock source for run time stats` configured under `Component Config > FreeRTOS`. The `esp_timer` should be selected be default. This option will affect the time unit resolution in which the statistics are measured with respect to.
-
-### Build and Flash
-
-Build the project and flash it to the board, then run monitor tool to view serial output:
-
-```
-idf.py -p PORT flash monitor
-```
-
-(Replace PORT with the name of the serial port to use.)
-
-(To exit the serial monitor, type ``Ctrl-]``.)
-
-See the Getting Started Guide for full steps to configure and use ESP-IDF to build projects.
-
-## Example Output
-
-The example should have the following log output:
-
-```
-...
-Getting real time stats over 100 ticks
-| Task | Run Time | Percentage
-| stats | 1304 | 0%
-| IDLE0 | 206251 | 10%
-| IDLE1 | 464785 | 23%
-| spin2 | 225389 | 11%
-| spin0 | 227174 | 11%
-| spin4 | 225303 | 11%
-| spin1 | 207264 | 10%
-| spin3 | 225331 | 11%
-| spin5 | 225369 | 11%
-| Tmr Svc | 0 | 0%
-| esp_timer | 0 | 0%
-| ipc1 | 0 | 0%
-| ipc0 | 0 | 0%
-Real time stats obtained
-...
-```
-
-## Example Breakdown
-
-### Spin tasks
-
-During the examples initialization process, multiple `spin` tasks are created. These tasks will simply spin a certain number of CPU cycles to consume CPU time, then block for a predetermined period.
-
-### Understanding the stats
-
-From the log output, it can be seen that the spin tasks consume nearly an equal amount of time over the specified stats collection period of `print_real_time_stats()`. The real time stats also display the CPU time consumption of other tasks created by default in ESP-IDF (e.g. `IDLE` and `ipc` tasks).
+## Environment requirements
+ - [ESP-IDF Framework](http://https://docs.espressif.com/projects/esp-idf/en/v3.3.5/get-started/index.html "ESP-IDF Framework") installed (check setup first with original ESP-IDF examples)
+ - USB to UART 3.3V converter for programming
+ 
+## Project status: under development
+ This project is still under development. Majority of mentioned above features are not implemented yet.
+ What is implemented:
+  - OLED Display works, display current measurements
+  - sensors: pressure, temperature (except DS18B20), humidity and light are implemented and measured
