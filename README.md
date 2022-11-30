@@ -1,6 +1,6 @@
 # Weather Station and logger based on ESP32
 
-The Weather Station measures Temperature, Humidity, Atm Pressure and Solar exposure. It also keeps track of current date and time and take pictures. All those informations are displayed (excluding pictures) in real time on the device display, and can also be viewed by the web intreface.
+The Weather Station measures: Temperature, Humidity, Atm Pressure and Solar exposure. It also keeps track of current date and time and take pictures. All of this data is logged on local storage (i.e. SD card). Main measurements are displayed in real time on the device OLED screen. All current and historical data can also be viewed by the web intreface as well as fetched by API.
 All user interactions are made by web interface. Besides display and on/off switch, the device has no other way to communicate with user.
 The purpose of the device is to deliver historical weather informations along with pictures of those conditions, for further analysis.
 Device can be used as weather conditions logger, time-lapse camera or just home weather station.
