@@ -18,14 +18,14 @@
 
 //Struct to hold instance of all env measurements
 struct measurement{
-	float lux = 0.0;	//light exposure (BH1750)
-	float iTemp = 0.0;	//internal temperature (BMP280)
-	float eTemp = 0.0;	//external temperature (DHT11)
-	float dTemp = 0.0;	//dedicated temperature (DS18B20)
-	float humi = 0.0;	//humidity (DHT11)
-	float pres = 0.0;	//atm. pressure (BPM280)
-	float alti = 0.0;	//altitude (BMP280, calculated)
-	int dht_status = 0; //dht last_measurement status
+  float lux = 0.0;	//light exposure (BH1750)
+  float iTemp = 0.0;	//internal temperature (BMP280)
+  float eTemp = 0.0;	//external temperature (DHT11)
+  float dTemp = 0.0;	//dedicated temperature (DS18B20)
+  float humi = 0.0;	//humidity (DHT11)
+  float pres = 0.0;	//atm. pressure (BPM280)
+  float alti = 0.0;	//altitude (BMP280, calculated)
+  int dht_status = 0; //dht last_measurement status
 };
 
 //Business logic global variables

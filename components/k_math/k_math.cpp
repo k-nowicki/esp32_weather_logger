@@ -11,7 +11,7 @@
  * @return Biggest of the two numbers
  */
 int max(int num1, int num2){
-    return (num1 > num2 ) ? num1 : num2;
+  return (num1 > num2 ) ? num1 : num2;
 }
 
 /**
@@ -20,5 +20,5 @@ int max(int num1, int num2){
  * @return Smallest of the two numbers
  */
 int min(int num1, int num2){
-    return (num1 > num2 ) ? num2 : num1;
+  return (num1 > num2 ) ? num2 : num1;
 }
