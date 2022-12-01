@@ -21,9 +21,12 @@ RTC | HW084 / DS3231 | http://www.szhwmake.com/prod_view.aspx?TypeId=83&Id=350&F
 <img src="https://i.imgur.com/I4ykYDd.png" alt="Connections" width="80%"/>
 
 ## Environment requirements
- - [ESP-IDF Framework](http://https://docs.espressif.com/projects/esp-idf/en/v3.3.5/get-started/index.html "ESP-IDF Framework") installed (check setup first with original ESP-IDF examples)
- - USB to UART 3.3V converter for programming
- 
+Warning: This is not arduino project! It needs proper environment (ESP-IDF Framework v4.4.3) installed on development machine.
+[Follow the instructions](https://docs.espressif.com/projects/esp-idf/en/v4.4.3/esp32/get-started/index.html "ESP-IDF Framework") to install all necessary software. After installing check your setup first with one of the ESP-IDF examples.
+
+## How to flash your ESP32
+Instructions on how to connect and flash esp32 can be found also on [espressiff docs](https://docs.espressif.com/projects/esp-idf/en/v3.3.5/get-started-cmake/index.html#step-9-flash-to-a-device "espressiff docs").
+
 ## Project status: under development
  This project is still under development. Majority of mentioned above features are not implemented yet.
  What is implemented:
