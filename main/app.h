@@ -16,6 +16,8 @@
 #ifndef MAIN_APP_H_
 #define MAIN_APP_H_
 
+#include <ErriezDs3231.h>
+
 //Struct to hold instance of all env measurements
 struct measurement{
   float lux = 0.0;	//light exposure (BH1750)
@@ -30,12 +32,19 @@ struct measurement{
 
 //Business logic global variables
 measurement curr_measures;	//Current measurements
+// Create RTC object
+ErriezDS3231 rtc;
+
 
 //Tasks declarations
 static void vSensorsTask(void*);
 static void vDHT11Task(void*);
+static void vRTCTask(void*);
 static void vDisplayTask(void*);
 static void stats_task(void*);
+
+//setup helper functions
+//void initialize_ds18b20(void);
 
 //task helper functions
 measurement get_latest_measurements(void);

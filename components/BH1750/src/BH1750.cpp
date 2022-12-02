@@ -10,7 +10,7 @@
 
 */
 
-#include "BH1750.h"
+#include "../../BH1750/src/BH1750.h"
 
 // Define milliseconds delay for ESP8266 platform
 #if defined(ESP8266)

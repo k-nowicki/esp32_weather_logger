@@ -31,6 +31,7 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "esp_err.h"
+#include <time.h>
 //Peripherals and libs
 #include "driver/gpio.h"
 #include <Wire.h>
@@ -41,9 +42,16 @@
 #include <Fonts/FreeSans9pt7b.h>
 #include <dht11.h>
 #include <BH1750.h>
+#include <ErriezDs3231.h>
+//#include <owb.h>
+//#include <owb_rmt.h>
+//#include <ds18b20.h>
+
 //App
 #include "setup.h"
 #include "app.h"
+
+
 
 
 extern "C" {
@@ -78,7 +86,7 @@ void app_main(void){
   vTaskDelay(pdMS_TO_TICKS(10));
 
   //Set I2C interface
-  Wire.begin(I2C_SDA, I2C_SCL);printf("search_i2c...");
+  Wire.begin(I2C_SDA, I2C_SCL);
   search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
 
   printf("GPIO's configuration...\n");//Set GPIOS for DHT11 and DS18B20 as GPIOs
@@ -104,8 +112,18 @@ void app_main(void){
     printf("BMP280 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }
+  if(!rtc.begin(&Wire)){
+    printf("RTC DS3231 initialization failed!");
+    for(;;); // Don't proceed, loop forever
+  }
+
+
+
+  //DS18B20 Initialization
+//  initialize_ds18b20();
 
   //Create business tasks
+  xTaskCreatePinnedToCore( vRTCTask, "RTC", 2048, NULL, RTC_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
@@ -126,7 +144,8 @@ void app_main(void){
  *
  * @param arg
  */
-static void vSensorsTask(void*){measurement tmp_measurements;
+static void vSensorsTask(void*){
+  measurement tmp_measurements;
   while (1) {
     // Read all fast sensors
     tmp_measurements.lux = lightMeter.readLightLevel();
@@ -170,6 +189,28 @@ static void vDHT11Task(void*){
 }
 
 /**
+ * @brief Task responsible for Real Time Clock
+ *        Updates current system DateTime from external RTC device
+ *        updates external RTC with NTP time
+ *
+ * @param
+ */
+static void vRTCTask(void*){
+  uint8_t hour, min, sec, mday, mon, wday;
+  uint16_t year;
+  while (1) {
+    // Time
+    // Get time from RTC
+    if (!rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday)) {
+        printf("Get time failed\n");
+    } else {
+        printf("Current time: %d-%02d-%04d  %02d:%02d:%02d\n", mday, mon, year, hour, min, sec);
+    }
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+}
+
+/**
  * @brief Task responsible for OLED display UI
  *
  * @param arg
@@ -198,7 +239,7 @@ static void vDisplayTask(void *arg){
     display.printf("Intern T: %3.2F %cC\n", tmp_measurements.iTemp,'\xF8');
     display.printf("Extern T: %3.2F %cC\n", tmp_measurements.eTemp,'\xF8');
     display.printf("Humidity: %d%%\n", (int)tmp_measurements.humi);
-    display.printf("Sun expo: %6.2FLux\n", tmp_measurements.lux);
+    display.printf("Sun expo: %6.2F Lux\n", tmp_measurements.lux);
     display.printf("Pressure: %4.2f hPa\n", tmp_measurements.pres);
     display.printf("Altitude: %5.2Fm\n", tmp_measurements.alti);
     display.display();
@@ -262,7 +303,7 @@ measurement get_latest_measurements(void){
   return last_measures;
 }
 /**
- * Save given measurements to global curr_measures variable
+ * Save given measurements (except DHT11) to global curr_measures variable
  * @param measures Measurements to store
  */
 void store_measurements(measurement measures){
@@ -393,7 +434,7 @@ exit:    //Common return path
 void search_i2c(void){
   uint8_t error, address;
   int nDevices;
-  printf("Scanning...\n");
+  printf("Searching I2C devices...");
   nDevices = 0;
   for (address = 1; address < 127; address++) {
     // The i2c_scanner uses the return value of
