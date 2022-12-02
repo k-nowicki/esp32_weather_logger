@@ -77,6 +77,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
  *  App Main
  */
 void app_main(void){
+  const char* TAG = "app_setup";
   //create semaphores
   current_measuers_mutex = xSemaphoreCreateMutex();
   uart_mutex = xSemaphoreCreateMutex();
@@ -89,31 +90,32 @@ void app_main(void){
   Wire.begin(I2C_SDA, I2C_SCL);
   search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
 
-  printf("GPIO's configuration...\n");//Set GPIOS for DHT11 and DS18B20 as GPIOs
+  //Set GPIOS for DHT11 and DS18B20 as GPIOs
+  ESP_LOGI(TAG, "GPIO's configuration...");
   PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DHT11], PIN_FUNC_GPIO);
   PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DS18B20], PIN_FUNC_GPIO);
   //Set up DHT11 GPIO
   DHT11_init(GPIO_DHT11);
-  printf("GPIO's configured!\n");
+  ESP_LOGI(TAG, "GPIO's configured!");
 
   //Setup OLED display
   if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
     display.display();
-    printf("SSD1306 allocation failed");
+    ESP_LOGE(TAG, "SSD1306 allocation failed");
     for(;;); // Don't proceed, loop forever
   }
   //BH1750 Initialization
   if(!lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire)){
-    printf("BH1750 initialization failed!");
+    ESP_LOGE(TAG, "BH1750 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }
   //BMP280 Initialization
   if(!pressureMeter.begin(BMP280_ADDR)){
-    printf("BMP280 initialization failed!");
+    ESP_LOGE(TAG, "BMP280 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }
   if(!rtc.begin(&Wire)){
-    printf("RTC DS3231 initialization failed!");
+    ESP_LOGE(TAG, "RTC DS3231 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }
 
@@ -191,21 +193,37 @@ static void vDHT11Task(void*){
 /**
  * @brief Task responsible for Real Time Clock
  *        Updates current system DateTime from external RTC device
- *        updates external RTC with NTP time
+ *        updates external RTC with NTP time (if available)
  *
  * @param
  */
 static void vRTCTask(void*){
+  const char* TAG = "rtc";
   uint8_t hour, min, sec, mday, mon, wday;
   uint16_t year;
+  time_t now;
+  char strftime_buf[64];
+  struct tm timeinfo;
+
+  // Set timezone to PL
+  setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+  tzset();
+
   while (1) {
     // Time
     // Get time from RTC
     if (!rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday)) {
-        printf("Get time failed\n");
+        ESP_LOGE(TAG, "Get time failed");
     } else {
-        printf("Current time: %d-%02d-%04d  %02d:%02d:%02d\n", mday, mon, year, hour, min, sec);
+        ESP_LOGI(TAG, "Current external RTC time: %d-%02d-%04d  %02d:%02d:%02d", mday, mon, year, hour, min, sec);
     }
+    //Get time from internal RTC:
+    time(&now);
+    //convert to printable
+    localtime_r(&now, &timeinfo);
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    //log the time
+    ESP_LOGI(TAG, "Current system date/time in Warsaw is: %s", strftime_buf);
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
@@ -432,9 +450,10 @@ exit:    //Common return path
  *
  */
 void search_i2c(void){
+  const char* TAG = "app_setup";
   uint8_t error, address;
   int nDevices;
-  printf("Searching I2C devices...");
+  ESP_LOGI(TAG, "Searching I2C devices...");
   nDevices = 0;
   for (address = 1; address < 127; address++) {
     // The i2c_scanner uses the return value of
@@ -443,23 +462,20 @@ void search_i2c(void){
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
     if (error == 0) {
-      printf(" -I2C device found at address 0x");
-        if (address < 16)
-      printf("0");
-//    printf(address, HEX);
-      printf("%02x\n", address);
+      ESP_LOGI(TAG, " -I2C device found at address 0x%02x", address);
       nDevices++;
     }
     else if(error == 4) {
       printf(" -Unknown error at address 0x");
+      ESP_LOGI(TAG, " -Unknown error at address 0x");
       if(address < 16)
         printf("0");
       printf((const char *)&address, HEX);
     }
   }
   if(nDevices == 0)
-    printf(" -No I2C devices found\n");
+    ESP_LOGW(TAG, " -No I2C devices found");
   else
-    printf("Done I2C scanning!\n");
-  vTaskDelay(pdMS_TO_TICKS(2000)); // wait 2 seconds
+    ESP_LOGI(TAG, "Done I2C scanning!");
+//  vTaskDelay(pdMS_TO_TICKS(2000)); // wait 2 seconds
 }
