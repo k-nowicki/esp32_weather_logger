@@ -12,4 +12,6 @@ set(EXTRA_COMPONENT_DIRS </components/arduino/libraries/Wire>)
 set(EXTRA_COMPONENT_DIRS </components/dht11>)
 set(EXTRA_COMPONENT_DIRS </components/k_math>)
 set(EXTRA_COMPONENT_DIRS </components/BH1750/src>)
+
+
 project(${ProjectId})
