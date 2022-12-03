@@ -85,7 +85,7 @@ void app_main(void){
   current_measuers_mutex = xSemaphoreCreateMutex();
   uart_mutex = xSemaphoreCreateMutex();
   //
-  //initArduino();
+//  initArduino();
   //Allow other core to finish initialization
   vTaskDelay(pdMS_TO_TICKS(10));
 
@@ -99,7 +99,7 @@ void app_main(void){
   PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DS18B20], PIN_FUNC_GPIO);
   //Set up DHT11 GPIO
   DHT11_init(GPIO_DHT11);
-  ESP_LOGI(TAG, "GPIO's configured!");
+  ESP_LOGI(TAG, "GPIO's initialized!");
 
   //Setup OLED display
   if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
@@ -107,27 +107,27 @@ void app_main(void){
     ESP_LOGE(TAG, "SSD1306 allocation failed");
     for(;;); // Don't proceed, loop forever
   }else{
-    ESP_LOGI(TAG, "SSD1306 OLED Display configured.");
+    ESP_LOGI(TAG, "SSD1306 OLED Display initialized.");
   }
   //BH1750 Initialization
   if(!lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire)){
     ESP_LOGE(TAG, "BH1750 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{
-    ESP_LOGI(TAG, "BH1750 Light meter configured.");
+    ESP_LOGI(TAG, "BH1750 Light meter initialized.");
   }
   //BMP280 Initialization
   if(!pressureMeter.begin(BMP280_ADDR)){
     ESP_LOGE(TAG, "BMP280 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{
-    ESP_LOGI(TAG, "BMP280 Pressure meter configured.");
+    ESP_LOGI(TAG, "BMP280 Pressure meter initialized.");
   }
   if(!rtc.begin(&Wire)){
     ESP_LOGE(TAG, "RTC DS3231 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{
-    ESP_LOGI(TAG, "DS3231 Real Time Clock configured.");
+    ESP_LOGI(TAG, "DS3231 Real Time Clock initialized.");
   }
 
 
