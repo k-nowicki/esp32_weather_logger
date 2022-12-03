@@ -3,6 +3,6 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := real_time_stats
+PROJECT_NAME := kk_weather_station
 
 include $(IDF_PATH)/make/project.mk

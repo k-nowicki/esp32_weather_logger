@@ -32,6 +32,7 @@
 #include "freertos/semphr.h"
 #include "esp_err.h"
 #include <time.h>
+#include "nvs_flash.h"
 //Peripherals and libs
 #include "driver/gpio.h"
 #include <Wire.h>
@@ -50,8 +51,10 @@
 //App
 #include "setup.h"
 #include "app.h"
+#include "sntp_sync.h"
 
-
+#include "protocol_common.h"
+//#include "../components/common_components/protocol_common/include/protocol_common.h"
 
 
 extern "C" {
@@ -103,29 +106,45 @@ void app_main(void){
     display.display();
     ESP_LOGE(TAG, "SSD1306 allocation failed");
     for(;;); // Don't proceed, loop forever
+  }else{
+    ESP_LOGI(TAG, "SSD1306 OLED Display configured.");
   }
   //BH1750 Initialization
   if(!lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire)){
     ESP_LOGE(TAG, "BH1750 initialization failed!");
     for(;;); // Don't proceed, loop forever
+  }else{
+    ESP_LOGI(TAG, "BH1750 Light meter configured.");
   }
   //BMP280 Initialization
   if(!pressureMeter.begin(BMP280_ADDR)){
     ESP_LOGE(TAG, "BMP280 initialization failed!");
     for(;;); // Don't proceed, loop forever
+  }else{
+    ESP_LOGI(TAG, "BMP280 Pressure meter configured.");
   }
   if(!rtc.begin(&Wire)){
     ESP_LOGE(TAG, "RTC DS3231 initialization failed!");
     for(;;); // Don't proceed, loop forever
+  }else{
+    ESP_LOGI(TAG, "DS3231 Real Time Clock configured.");
   }
 
+
+  ESP_LOGI(TAG, "Initializing NVS flash...");
+  ESP_ERROR_CHECK( nvs_flash_init() );
+  ESP_LOGI(TAG, "Initializing network interface...");
+  ESP_ERROR_CHECK(esp_netif_init());
+  ESP_ERROR_CHECK( esp_event_loop_create_default() );
+  ESP_LOGI(TAG, "Connecting to WiFi network...");
+  ESP_ERROR_CHECK(network_connect());
 
 
   //DS18B20 Initialization
 //  initialize_ds18b20();
 
   //Create business tasks
-  xTaskCreatePinnedToCore( vRTCTask, "RTC", 2048, NULL, RTC_TASK_PRIO, NULL, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vRTCTask, "RTC", 3096, NULL, RTC_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
@@ -205,9 +224,9 @@ static void vRTCTask(void*){
   char strftime_buf[64];
   struct tm timeinfo;
 
-  // Set timezone to PL
-  setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
-  tzset();
+  sync_time_with_ntp();
+
+
 
   while (1) {
     // Time
