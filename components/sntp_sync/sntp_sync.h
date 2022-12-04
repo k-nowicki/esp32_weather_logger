@@ -25,7 +25,7 @@
  * maintains its value when ESP32 wakes from deep sleep.
  */
 
-
+void initialize_sntp(void);
 void sync_time_with_ntp(void);
 
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_CUSTOM

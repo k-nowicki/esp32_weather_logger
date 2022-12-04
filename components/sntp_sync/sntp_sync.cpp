@@ -29,9 +29,9 @@ static const char *TAG = "sntp_sync";
  * It is placed into RTC memory using RTC_DATA_ATTR and
  * maintains its value when ESP32 wakes from deep sleep.
  */
-RTC_DATA_ATTR static int boot_count = 0;
+//RTC_DATA_ATTR static int boot_count = 0;
 static void obtain_time(void);
-static void initialize_sntp(void);
+void initialize_sntp(void);
 
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_CUSTOM
 void sntp_sync_time(struct timeval *tv){
@@ -42,23 +42,23 @@ void sntp_sync_time(struct timeval *tv){
 #endif
 
 void time_sync_notification_cb(struct timeval *tv){
-  ESP_LOGI(TAG, "Notification of a time synchronization event");
+  ;
 }
 
 void sync_time_with_ntp(void){
-  ++boot_count;
-  ESP_LOGI(TAG, "Boot count: %d", boot_count);
+//  ++boot_count;
+//  ESP_LOGI(TAG, "Boot count: %d", boot_count);
 
   time_t now;
   struct tm timeinfo;
   time(&now);
   localtime_r(&now, &timeinfo);
   // Is time set? If not, tm_year will be (1970 - 1900).
-  if (timeinfo.tm_year < (2016 - 1900)) {
+  if (timeinfo.tm_year < (2022 - 1900)) {
     ESP_LOGI(TAG, "Time is not set yet. Getting time over NTP...");
     obtain_time();
     // update 'now' variable with current time
-    time(&now);
+//    time(&now);
   }
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
   else {
@@ -83,9 +83,7 @@ void sync_time_with_ntp(void){
 
   char strftime_buf[64];
 
-  // Set timezone to Polish time and print local time
-  setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
-  tzset();
+
   localtime_r(&now, &timeinfo);
   strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
   ESP_LOGI(TAG, "The current date/time in Warsaw is: %s", strftime_buf);
@@ -101,46 +99,31 @@ void sync_time_with_ntp(void){
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
   }
-
-//  const int deep_sleep_sec = 10;
-//  ESP_LOGI(TAG, "Entering deep sleep for %d seconds", deep_sleep_sec);
-//  esp_deep_sleep(1000000LL * deep_sleep_sec);
 }
 
+
 static void obtain_time(void){
-
-
-  /**
-   * NTP server address could be aquired via DHCP,
-   * see LWIP_DHCP_GET_NTP_SRV menuconfig option
-   */
 #ifdef LWIP_DHCP_GET_NTP_SRV
   sntp_servermode_dhcp(1);
 #endif
 
-  /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-   * Read "Establishing Wi-Fi or Ethernet Connection" section in
-   * examples/protocols/README.md for more information about this function.
-   */
-
   initialize_sntp();
 
   // wait for time to be set
-  time_t now = 0;
-  struct tm timeinfo = { 0 };
-  int retry = 0;
-  const int retry_count = 10;
-  while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retry_count) {
-    ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-  }
-  time(&now);
-  localtime_r(&now, &timeinfo);
-
-//  ESP_ERROR_CHECK( network_disconnect() );
+//  time_t now = 0;
+//  struct tm timeinfo = { 0 };
+//  int retry = 0;
+//  const int retry_count = 10;
+//  while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retry_count) {
+//    ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
+//    vTaskDelay(2000 / portTICK_PERIOD_MS);
+//  }
+//  time(&now);
+//  localtime_r(&now, &timeinfo);
 }
 
-static void initialize_sntp(void){
+void initialize_sntp(void){
+
   ESP_LOGI(TAG, "Initializing SNTP");
   sntp_setoperatingmode(SNTP_OPMODE_POLL);
   sntp_setservername(0, "pool.ntp.org");

@@ -30,7 +30,13 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "esp_system.h"
+#include "esp_log.h"
 #include "esp_err.h"
+#include "esp_event.h"
+#include "esp_attr.h"
+#include "esp_sleep.h"
+#include "esp_sntp.h"
 #include <time.h>
 #include "nvs_flash.h"
 //Peripherals and libs
@@ -51,10 +57,8 @@
 //App
 #include "setup.h"
 #include "app.h"
-#include "sntp_sync.h"
 
 #include "protocol_common.h"
-//#include "../components/common_components/protocol_common/include/protocol_common.h"
 
 
 extern "C" {
@@ -210,44 +214,80 @@ static void vDHT11Task(void*){
 }
 
 /**
- * @brief Task responsible for Real Time Clock
- *        Updates current system DateTime from external RTC device
- *        updates external RTC with NTP time (if available)
+ * @brief Task responsible for Real Time Clocks
+ * @details
+ *        There are 3 available time sources:
+ *          - Internal esp32 RTC
+ *          - External DS3231 RTC
+ *          - NTP time sources
+ *        The purpose of this task is to ensure accurate time source at (almost) any moment.
+ *        Local RTC is used by the system and App and it is instantly available, but
+ *        at every power loss or even hard reset, the internal RTC is reseting too.
+ *        External RTC is more reliable, but it also needs to be controlled and set if
+ *        needed (i.e. when RTC battery is dead).
+ *        NTP is used to synchronize both internal and external RTCs every 1 hour*.
+ *        NTP update is triggered also when RTCs inconsistency is found.
  *
- * @param
+ *        Task executes loop every 10seconds
+ *
+ *        *) SNTP sync period is configured by menuconfig. The defalut sync period is set to 1 hour (3600000ms)
  */
 static void vRTCTask(void*){
   const char* TAG = "rtc";
+  const char* TIMEZONE = "CET-1CEST,M3.5.0,M10.5.0/3";  //TODO: make it configurable by menuconfig
+  int retry = 0;
   uint8_t hour, min, sec, mday, mon, wday;
   uint16_t year;
   time_t now;
-  char strftime_buf[64];
   struct tm timeinfo;
 
-  //sync system time with NTP
-  sync_time_with_ntp();
-  //update RTC
-  time(&now);
-  localtime_r(&now, &timeinfo);
-  rtc.write(&timeinfo);
+  // Set timezone for system RTC
+  setenv("TZ", TIMEZONE, 1);
+  tzset();
 
+  //Sync local RTC with external RTC
+  update_int_rtc_from_ext_rtc();
 
+  //Get external RTC time
+  rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday);
+
+  //Initialize sNTP synchronization events
+  initialize_sntp();
+
+  //Wait for NTP Update
+  while (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED && ++retry < 30) {
+    ESP_LOGI(TAG, "Waiting for NTP... (%d/%d)", retry, 30);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+  }
+  ESP_LOGI(TAG, "RTC Clocks updated with NTP.");
   while (1) {
-    // Time
-    // Get time from RTC
-    if (!rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday)) {
-        ESP_LOGE(TAG, "Get ext RTC time failed");
-    } else {
-        ESP_LOGI(TAG, "Current external RTC time: %d-%02d-%04d  %02d:%02d:%02d", mday, mon, year, hour, min, sec);
-    }
     //Get time from internal RTC:
     time(&now);
-    //convert to printable
     localtime_r(&now, &timeinfo);
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    //log the time
-    ESP_LOGI(TAG, "Current system date/time in Warsaw is: %s", strftime_buf);
-    vTaskDelay(pdMS_TO_TICKS(1000));
+
+    //Compare both, update the one that is out or both
+    if((year < 2022)&&((timeinfo.tm_year+1900) >= 2022)){   //Bad RTC Time, good local time
+        ESP_LOGW(TAG, "External RTC out! Updating from internal RTC.");
+        update_ext_rtc_from_int_rtc();
+    }else if(((timeinfo.tm_year+1900) < 2022)&&(year >= 2022)){ //Bad local, good RTC time
+        ESP_LOGW(TAG, "Internal RTC out! Updating from external RTC.");
+        update_int_rtc_from_ext_rtc();
+    }else if((year < 2022&&((timeinfo.tm_year+1900) < 2022))){                                              //both out- trigger immediate NTP Update
+      ESP_LOGW(TAG, "Both RTCs out! Calling NTP Update!");
+      sntp_stop();
+      sntp_init();
+    }
+
+    //Print out Time
+    if (!rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday)) {
+      ESP_LOGE(TAG, "Get ext RTC time failed");
+    }else {
+      ESP_LOGI(TAG, "External RTC time: %d-%02d-%04d  %02d:%02d:%02d", mday, mon, year, hour, min, sec);
+    }
+
+    ESP_LOGI(TAG, "System RTC time: %d-%02d-%04d  %02d:%02d:%02d", timeinfo.tm_mday, timeinfo.tm_mon+1,
+                   timeinfo.tm_year+1900, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+    vTaskDelay(pdMS_TO_TICKS(10000));
   }
 }
 
@@ -281,7 +321,7 @@ static void vDisplayTask(void *arg){
     tmp_measurements = get_latest_measurements(); //safely read current values
     time(&now);
     localtime_r(&now, &timeinfo);
-    display.printf("%d-%02d-%04d  %02d:%02d:%02d\n", timeinfo.tm_mday, timeinfo.tm_mon,
+    display.printf("%0d-%02d-%04d  %02d:%02d:%02d\n", timeinfo.tm_mday, timeinfo.tm_mon+1,
                    timeinfo.tm_year+1900, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
     display.printf("Intern T: %3.2F %cC\n", tmp_measurements.iTemp,'\xF8');
     display.printf("Extern T: %3.2F %cC\n", tmp_measurements.eTemp,'\xF8');
@@ -507,4 +547,58 @@ void search_i2c(void){
   else
     ESP_LOGI(TAG, "Done I2C scanning!");
 //  vTaskDelay(pdMS_TO_TICKS(2000)); // wait 2 seconds
+}
+
+
+
+/**
+ * Callback called on SNTP synchronization event.
+ * Used to synchronize external RTC with NTP time
+ *
+ * @param tv
+ */
+void time_sync_notification_cb(struct timeval *tv){
+  const char* TAG = "NTP time sync";
+  time_t now;
+  struct tm timeinfo;
+  //update RTC
+  time(&now);
+  localtime_r(&now, &timeinfo);
+  if(rtc.write(&timeinfo)){
+    ESP_LOGI(TAG, "Local and external RTC updated.");
+  }else{
+    ESP_LOGE(TAG, "Local RTC sync done, external RTC reported error!");
+  }
+}
+
+uint8_t update_ext_rtc_from_int_rtc(void){
+  time_t now;
+  struct tm timeinfo;
+  //update RTC
+  time(&now);
+  localtime_r(&now, &timeinfo);
+  if(rtc.write(&timeinfo))
+    return 0;
+  else
+    return 1;
+}
+
+void update_int_rtc_from_ext_rtc(void){
+  timeval tv_now = {0,0};
+  tv_now.tv_sec = rtc.getEpoch();
+  settimeofday(&tv_now, NULL);
+}
+
+/**
+ * Initialize SNTP RTC updates
+ *
+ */
+void initialize_sntp(void){
+  sntp_setoperatingmode(SNTP_OPMODE_POLL);
+  sntp_setservername(0, "pool.ntp.org");
+  sntp_set_time_sync_notification_cb(time_sync_notification_cb);
+#ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
+  sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
+#endif
+  sntp_init();
 }
