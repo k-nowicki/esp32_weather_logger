@@ -112,6 +112,7 @@ void app_main(void){
     for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "SSD1306 OLED Display configured.");
+    init_app_screen();
   }
   //BH1750 Initialization
   if(!lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire)){
@@ -267,11 +268,11 @@ static void vRTCTask(void*){
 
     //Compare both, update the one that is out or both
     if((year < 2022)&&((timeinfo.tm_year+1900) >= 2022)){   //Bad RTC Time, good local time
-        ESP_LOGW(TAG, "External RTC out! Updating from internal RTC.");
-        update_ext_rtc_from_int_rtc();
+      ESP_LOGW(TAG, "External RTC out! Updating from internal RTC.");
+      update_ext_rtc_from_int_rtc();
     }else if(((timeinfo.tm_year+1900) < 2022)&&(year >= 2022)){ //Bad local, good RTC time
-        ESP_LOGW(TAG, "Internal RTC out! Updating from external RTC.");
-        update_int_rtc_from_ext_rtc();
+      ESP_LOGW(TAG, "Internal RTC out! Updating from external RTC.");
+      update_int_rtc_from_ext_rtc();
     }else if((year < 2022&&((timeinfo.tm_year+1900) < 2022))){                                              //both out- trigger immediate NTP Update
       ESP_LOGW(TAG, "Both RTCs out! Calling NTP Update!");
       sntp_stop();
@@ -300,19 +301,7 @@ static void vDisplayTask(void *arg){
   measurement tmp_measurements;
   time_t now;
   struct tm timeinfo;
-  display.display();
-  vTaskDelay(pdMS_TO_TICKS(200));
-  display.clearDisplay();
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE); // Draw white text
-  display.setCursor(0, 10);     // Start at top-left corner
-  display.cp437(true);         // Use full 256 char 'Code Page 437' font
-  display.setFont(&FreeSans9pt7b);
 
-  display.println("Weather Station V 1.0");
-  display.setFont();
-  display.println("by KNowicki @ 2022");
-  display.display();
   vTaskDelay(pdMS_TO_TICKS(1000));
   while(1){
     vTaskDelay(pdMS_TO_TICKS(100));
@@ -321,7 +310,7 @@ static void vDisplayTask(void *arg){
     tmp_measurements = get_latest_measurements(); //safely read current values
     time(&now);
     localtime_r(&now, &timeinfo);
-    display.printf("%0d-%02d-%04d  %02d:%02d:%02d\n", timeinfo.tm_mday, timeinfo.tm_mon+1,
+    display.printf("%02d-%02d-%04d  %02d:%02d:%02d\n", timeinfo.tm_mday, timeinfo.tm_mon+1,
                    timeinfo.tm_year+1900, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
     display.printf("Intern T: %3.2F %cC\n", tmp_measurements.iTemp,'\xF8');
     display.printf("Extern T: %3.2F %cC\n", tmp_measurements.eTemp,'\xF8');
@@ -377,9 +366,30 @@ static void stats_task(void *arg){
  *
  */
 
+
 /**
- * curr_measures are global variable used in many tasks. That is why it needs to
- * be protected against changing value in the middle of writing/reading.
+ * @brief Sets up display for the app and displays splash screen
+ *
+ */
+void init_app_screen(void){
+  display.display();
+  vTaskDelay(pdMS_TO_TICKS(200));
+  display.clearDisplay();
+  display.setTextSize(1);      // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE); // Draw white text
+  display.setCursor(0, 10);     // Start at top-left corner
+  display.cp437(true);         // Use full 256 char 'Code Page 437' font
+  display.setFont(&FreeSans9pt7b);
+
+  display.println("Weather Station V 1.0");
+  display.setFont();
+  display.println("by KNowicki @ 2022");
+  display.display();
+}
+
+/**
+ * @brief curr_measures are global variable used in many tasks. That is why it needs to
+ *        be protected against changing value in the middle of writing/reading.
  * @return Copy of curr_measures done under mutex control.
  */
 measurement get_latest_measurements(void){
@@ -390,7 +400,7 @@ measurement get_latest_measurements(void){
   return last_measures;
 }
 /**
- * Save given measurements (except DHT11) to global curr_measures variable
+ * @brief Save given measurements (except DHT11) to global curr_measures variable
  * @param measures Measurements to store
  */
 void store_measurements(measurement measures){
@@ -553,7 +563,8 @@ void search_i2c(void){
 
 /**
  * Callback called on SNTP synchronization event.
- * Used to synchronize external RTC with NTP time
+ * Used to synchronize external RTC with NTP time.
+ * (Local RTC is synchronized by sntp lib before this call)
  *
  * @param tv
  */
