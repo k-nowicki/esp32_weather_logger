@@ -224,15 +224,19 @@ static void vRTCTask(void*){
   char strftime_buf[64];
   struct tm timeinfo;
 
+  //sync system time with NTP
   sync_time_with_ntp();
-
+  //update RTC
+  time(&now);
+  localtime_r(&now, &timeinfo);
+  rtc.write(&timeinfo);
 
 
   while (1) {
     // Time
     // Get time from RTC
     if (!rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday)) {
-        ESP_LOGE(TAG, "Get time failed");
+        ESP_LOGE(TAG, "Get ext RTC time failed");
     } else {
         ESP_LOGI(TAG, "Current external RTC time: %d-%02d-%04d  %02d:%02d:%02d", mday, mon, year, hour, min, sec);
     }
@@ -254,6 +258,8 @@ static void vRTCTask(void*){
  */
 static void vDisplayTask(void *arg){
   measurement tmp_measurements;
+  time_t now;
+  struct tm timeinfo;
   display.display();
   vTaskDelay(pdMS_TO_TICKS(200));
   display.clearDisplay();
@@ -273,6 +279,10 @@ static void vDisplayTask(void *arg){
     display.clearDisplay();
     display.setCursor(0, 0);     // Start at top-left corner
     tmp_measurements = get_latest_measurements(); //safely read current values
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    display.printf("%d-%02d-%04d  %02d:%02d:%02d\n", timeinfo.tm_mday, timeinfo.tm_mon,
+                   timeinfo.tm_year+1900, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
     display.printf("Intern T: %3.2F %cC\n", tmp_measurements.iTemp,'\xF8');
     display.printf("Extern T: %3.2F %cC\n", tmp_measurements.eTemp,'\xF8');
     display.printf("Humidity: %d%%\n", (int)tmp_measurements.humi);
