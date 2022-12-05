@@ -98,7 +98,7 @@ static const char *s_ipv6_addr_types[] = {
 };
 #endif
 
-static const char *TAG = "network_connect";
+static const char *TAG = "net_connect";
 
 #if CONFIG_KK_CONNECT_WIFI
 static esp_netif_t *wifi_start(void);
