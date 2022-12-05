@@ -51,6 +51,10 @@ measurement get_latest_measurements(void);
 void store_measurements(measurement);
 static esp_err_t print_real_time_stats(TickType_t);
 void search_i2c(void);
+void time_sync_notification_cb(struct timeval *);
+void initialize_sntp(void);
+uint8_t update_ext_rtc_from_int_rtc(void);
+void update_int_rtc_from_ext_rtc(void);
 
 //semaphores
 SemaphoreHandle_t current_measuers_mutex;

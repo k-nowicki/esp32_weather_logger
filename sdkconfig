@@ -243,14 +243,6 @@ CONFIG_ARDUINO_SELECTIVE_WiFi=y
 # end of Arduino Configuration
 
 #
-# KK Configuration
-#
-CONFIG_SNTP_TIME_SYNC_METHOD_IMMED=y
-# CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH is not set
-# CONFIG_SNTP_TIME_SYNC_METHOD_CUSTOM is not set
-# end of KK Configuration
-
-#
 # Compiler options
 #
 CONFIG_COMPILER_OPTIMIZATION_DEFAULT=y
