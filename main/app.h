@@ -63,6 +63,7 @@ extern SemaphoreHandle_t uart_mutex;
 //void initialize_ds18b20(void);
 
 //task helper functions
+void init_app_screen(void);
 measurement get_latest_measurements(void);
 void store_measurements(measurement);
 void search_i2c(void);
