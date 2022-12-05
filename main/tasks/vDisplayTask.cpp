@@ -92,3 +92,24 @@ void vDisplayTask(void *arg){
     display.display();
   }
 }
+
+
+/**
+ * @brief Sets up display for the app and displays splash screen
+ *
+ */
+void init_app_screen(void){
+  display.display();
+  vTaskDelay(pdMS_TO_TICKS(200));
+  display.clearDisplay();
+  display.setTextSize(1);      // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE); // Draw white text
+  display.setCursor(0, 10);     // Start at top-left corner
+  display.cp437(true);         // Use full 256 char 'Code Page 437' font
+  display.setFont(&FreeSans9pt7b);
+
+  display.println("Weather Station V 1.0");
+  display.setFont();
+  display.println("by KNowicki @ 2022");
+  display.display();
+}

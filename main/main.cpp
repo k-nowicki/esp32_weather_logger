@@ -83,7 +83,7 @@ void app_main(void){
   //create semaphores
   current_measuers_mutex = xSemaphoreCreateMutex();
   uart_mutex = xSemaphoreCreateMutex();
-  //
+
 //  initArduino();
   //Allow other core to finish initialization
   vTaskDelay(pdMS_TO_TICKS(10));
@@ -108,6 +108,7 @@ void app_main(void){
     for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "SSD1306 OLED Display initialized.");
+    init_app_screen();
   }
   //BH1750 Initialization
   if(!lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire)){
@@ -152,3 +153,4 @@ void app_main(void){
   //Create and start stats task
   xTaskCreatePinnedToCore(stats_task, "STATS", 2048, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);
 }
+
