@@ -16,7 +16,19 @@
 #ifndef MAIN_APP_H_
 #define MAIN_APP_H_
 
+//Peripheral drivers
+#include "driver/gpio.h"
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Adafruit_BMP280.h>
+#include <Fonts/FreeSans9pt7b.h>
+#include <dht11.h>
+#include <BH1750.h>
 #include <ErriezDs3231.h>
+//#include <owb.h>
+//#include <owb_rmt.h>
+//#include <ds18b20.h>
 
 //Struct to hold instance of all env measurements
 struct measurement{
@@ -31,17 +43,21 @@ struct measurement{
 };
 
 //Business logic global variables
-measurement curr_measures;	//Current measurements
+extern measurement curr_measures;	//Current measurements
 // Create RTC object
-ErriezDS3231 rtc;
+extern ErriezDS3231 rtc;
+
+//Sensor global objects
+extern BH1750 lightMeter;
+extern Adafruit_BMP280 pressureMeter; // I2C
+extern Adafruit_SSD1306 display;
 
 
-//Tasks declarations
-static void vSensorsTask(void*);
-static void vDHT11Task(void*);
-static void vRTCTask(void*);
-static void vDisplayTask(void*);
-static void stats_task(void*);
+//semaphores
+extern SemaphoreHandle_t current_measuers_mutex;
+extern SemaphoreHandle_t uart_mutex;
+
+
 
 //setup helper functions
 //void initialize_ds18b20(void);
@@ -49,16 +65,11 @@ static void stats_task(void*);
 //task helper functions
 measurement get_latest_measurements(void);
 void store_measurements(measurement);
-static esp_err_t print_real_time_stats(TickType_t);
 void search_i2c(void);
 void time_sync_notification_cb(struct timeval *);
 void initialize_sntp(void);
 uint8_t update_ext_rtc_from_int_rtc(void);
 void update_int_rtc_from_ext_rtc(void);
-
-//semaphores
-SemaphoreHandle_t current_measuers_mutex;
-SemaphoreHandle_t uart_mutex;
 
 
 
