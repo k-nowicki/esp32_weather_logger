@@ -30,8 +30,8 @@ Instructions on how to connect and flash esp32 can be found also on [espressiff 
 ## Project status: under development
  This project is still under development. Majority of features mentioned above are not implemented yet.
  What is implemented:
-  - OLED Display works, displays current measurements
+  - OLED Display displays current measurements, date and time
   - Sensors: pressure, temperature (except DS18B20), humidity and light are implemented and measured
-  - External RTC
-  - WiFi connectivity (with hardcoded credentials for now)
-  - NTP time sync for internal RTC at startup
+  - External and internal RTCs with periodic NTP time sync
+  - WiFi connectivity (with credentials configured by menuconfig for now)
+  
