@@ -64,7 +64,7 @@
  *        NTP is used to synchronize both internal and external RTCs every 1 hour*.
  *        NTP update is triggered also when RTCs inconsistency is found.
  *
- *        Task executes loop every 10seconds
+ *        Task loop executes every 10seconds
  *
  *        *) SNTP sync period is configured by menuconfig. The defalut sync period is set to 1 hour (3600000ms)
  */
@@ -108,7 +108,7 @@ void vRTCTask(void*){
     }else if(((timeinfo.tm_year+1900) < 2022)&&(year >= 2022)){ //Bad local, good RTC time
         ESP_LOGW(TAG, "Internal RTC out! Updating from external RTC.");
         update_int_rtc_from_ext_rtc();
-    }else if((year < 2022&&((timeinfo.tm_year+1900) < 2022))){                                              //both out- trigger immediate NTP Update
+    }else if((year < 2022&&((timeinfo.tm_year+1900) < 2022))){  //both out- trigger immediate NTP Update
       ESP_LOGW(TAG, "Both RTCs out! Calling NTP Update!");
       sntp_stop();
       sntp_init();

@@ -54,8 +54,11 @@
  *
  * @param arg
  *
- * Task needed, because DHT11 needs some times more than 2seconds to take measurements
- * When this was
+ * DHT11 needs usually around 2 seconds to take measurement. As tests showed,
+ * it also should not be read too often (most reads ends up with error then).
+ * All other sensors are extremely fast in compare and can be read on the fly.
+ * This is why reading of DHT11 is moved to separate task with different approach.
+ *
  */
 void vDHT11Task(void*){
   measurement tmp_measurements;
