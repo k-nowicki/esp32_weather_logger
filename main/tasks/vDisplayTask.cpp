@@ -86,7 +86,7 @@ void vDisplayTask(void *arg){
     display.printf("Intern T: %3.2F %cC\n", tmp_measurements.iTemp,'\xF8');
     display.printf("Extern T: %3.2F %cC\n", tmp_measurements.eTemp,'\xF8');
     display.printf("Humidity: %d%%\n", (int)tmp_measurements.humi);
-    display.printf("Sun expo: %6.2F Lux\n", tmp_measurements.lux);
+    display.printf("Sun expo: %5.2F Lux\n", tmp_measurements.lux);
     display.printf("Pressure: %4.2f hPa\n", tmp_measurements.pres);
     display.printf("Altitude: %5.2Fm\n", tmp_measurements.alti);
     display.display();

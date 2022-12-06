@@ -91,15 +91,6 @@ void app_main(void){
   //Set I2C interface
   Wire.begin(I2C_SDA, I2C_SCL);
   Wire.setClock(400000);
-  search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
-
-  //Set GPIOS for DHT11 and DS18B20 as GPIOs
-  ESP_LOGI(TAG, "GPIO's configuration...");
-  PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DHT11], PIN_FUNC_GPIO);
-  PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DS18B20], PIN_FUNC_GPIO);
-  //Set up DHT11 GPIO
-  DHT11_init(GPIO_DHT11);
-  ESP_LOGI(TAG, "GPIO's initialized!");
 
   //Setup OLED display
   if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
@@ -110,6 +101,18 @@ void app_main(void){
     ESP_LOGI(TAG, "SSD1306 OLED Display initialized.");
     init_app_screen();
   }
+
+//  search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
+
+  //Set GPIOS for DHT11 and DS18B20 as GPIOs
+  ESP_LOGI(TAG, "GPIO's configuration...");
+  PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DHT11], PIN_FUNC_GPIO);
+  PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[GPIO_DS18B20], PIN_FUNC_GPIO);
+  //Set up DHT11 GPIO
+  DHT11_init(GPIO_DHT11);
+  ESP_LOGI(TAG, "GPIO's initialized!");
+
+
   //BH1750 Initialization
   if(!lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire)){
     ESP_LOGE(TAG, "BH1750 initialization failed!");
