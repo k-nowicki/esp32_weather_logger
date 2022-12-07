@@ -102,13 +102,13 @@ void vRTCTask(void*){
     localtime_r(&now, &timeinfo);
 
     //Compare both, update the one that is out or both
-    if((year < 2022)&&((timeinfo.tm_year+1900) >= 2022)){   //Bad RTC Time, good local time
+    if((year < 2022) && ((timeinfo.tm_year+1900) >= 2022)){   //Bad RTC Time, good local time
         ESP_LOGW(TAG, "External RTC out! Updating from internal RTC.");
         update_ext_rtc_from_int_rtc();
-    }else if(((timeinfo.tm_year+1900) < 2022)&&(year >= 2022)){ //Bad local, good RTC time
+    }else if(((timeinfo.tm_year+1900) < 2022) && (year >= 2022)){ //Bad local, good RTC time
         ESP_LOGW(TAG, "Internal RTC out! Updating from external RTC.");
         update_int_rtc_from_ext_rtc();
-    }else if((year < 2022&&((timeinfo.tm_year+1900) < 2022))){  //both out- trigger immediate NTP Update
+    }else if((year < 2022) && ((timeinfo.tm_year+1900) < 2022)){  //both out- trigger immediate NTP Update
       ESP_LOGW(TAG, "Both RTCs out! Calling NTP Update!");
       sntp_stop();
       sntp_init();
