@@ -65,12 +65,18 @@
 #define WIFISSID "WiFi_Net_Name"
 #define WIFIPSK  "WiFi_Passwd"
 #endif
+/*******************************************************************************
+ *  SD Card Setup
+ */
+#define SD_MOUNT_POINT "/sd"
+#define SD_MAX_FILES 5
+#define SD_ALLOCATION_UNIT_SIZE 16 * 512   //tradeoff between heap demand and speed
 
 /*******************************************************************************
  *  System Setup
  */
 
-#define SDMMC_TASK_PRIO     17
+#define SDLOG_TASK_PRIO     17
 #define STATS_TASK_PRIO     11
 #define DISPLAY_TASK_PRIO   13
 #define SENSORS_TASK_PRIO   14
