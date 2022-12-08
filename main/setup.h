@@ -70,7 +70,7 @@
  *  System Setup
  */
 
-#define SDMMC_TASK_PRIO     10
+#define SDMMC_TASK_PRIO     17
 #define STATS_TASK_PRIO     11
 #define DISPLAY_TASK_PRIO   13
 #define SENSORS_TASK_PRIO   14

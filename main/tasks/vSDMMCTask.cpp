@@ -51,9 +51,11 @@
 //App headers
 #include "tasks.h"
 
-
-void unmount_sd(sdmmc_card_t *);
-uint8_t init_sd(sdmmc_card_t *);
+void unmount_sd();
+uint8_t init_sd();
+//void unmount_sd(sdmmc_card_t *);
+//uint8_t init_sd(sdmmc_card_t &);
+sdmmc_card_t * card;
 /*******************************************************************************/
 
 
@@ -66,12 +68,10 @@ static const char *TAG = "SDMMC";
  *
  * @param arg
  *
- *
- *
  */
 void vSDMMCTask(void*){
-  sdmmc_card_t *card;
-  if(init_sd(card) != ESP_OK){
+
+  if(init_sd() != ESP_OK){
       ESP_LOGE(TAG, "Cannot initialize SD Card!");
       ESP_LOGE(TAG, "Task will end...");
       vTaskDelete( NULL );
@@ -86,6 +86,7 @@ void vSDMMCTask(void*){
          ESP_LOGE(TAG, "Task will end...");
          vTaskDelete( NULL );
      }
+     ESP_LOGI(TAG, "File opened, lets try to write something...", file_hello);
      fprintf(f, "Hello %s!\n This is kk_weather_station project writing to file on SD Card!\n", card->cid.name);
      fclose(f);
      ESP_LOGI(TAG, "File written");
@@ -104,7 +105,7 @@ void vSDMMCTask(void*){
      if (rename(file_hello, file_foo) != 0) {
          ESP_LOGE(TAG, "Rename failed");
          ESP_LOGE(TAG, "Task will end...");
-         unmount_sd(card);
+         unmount_sd();
          vTaskDelete( NULL );
      }
 
@@ -114,7 +115,7 @@ void vSDMMCTask(void*){
      if (f == NULL) {
          ESP_LOGE(TAG, "Failed to open file for reading");
          ESP_LOGE(TAG, "Task will end...");
-         unmount_sd(card);
+         unmount_sd();
          vTaskDelete( NULL );
      }
 
@@ -131,20 +132,24 @@ void vSDMMCTask(void*){
      ESP_LOGI(TAG, "Read from file: '%s'", line);
 
      ESP_LOGI(TAG, "End of SDMMC Task, all done! Task will be deleted!");
-     unmount_sd(card);
+     unmount_sd();
      vTaskDelete( NULL );
   }
 }
 
-
-void unmount_sd(sdmmc_card_t *card){
+//void unmount_sd(sdmmc_card_t *card){
+void unmount_sd(){
   // All done, unmount partition and disable SDMMC peripheral
+  const char mount_point[] = MOUNT_POINT;
   esp_vfs_fat_sdcard_unmount(mount_point, card);
   ESP_LOGI(TAG, "Card unmounted");
 }
 
-uint8_t init_sd(sdmmc_card_t *card){
+//uint8_t init_sd(sdmmc_card_t & _card){
+uint8_t init_sd(){
   esp_err_t ret;
+
+//  sdmmc_card_t * card = &_card;
 
   // Options for mounting the filesystem.
   // If format_if_mount_failed is set to true, SD card will be partitioned and
