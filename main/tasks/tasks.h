@@ -18,6 +18,6 @@ void vDHT11Task(void*);
 void vRTCTask(void*);
 void vDisplayTask(void*);
 void stats_task(void*);
-void vSDMMCTask(void*);
+void vSDLOGTask(void*);
 
 #endif /* MAIN_TASKS_TASKS_H_ */

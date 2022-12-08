@@ -17,6 +17,7 @@
 #define MAIN_APP_H_
 
 //Peripheral drivers
+#include "sdmmc_cmd.h"
 #include "driver/gpio.h"
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -53,6 +54,8 @@ extern BH1750 lightMeter;
 extern Adafruit_BMP280 pressureMeter; // I2C
 extern Adafruit_SSD1306 display;
 
+//SD Card global object
+extern sdmmc_card_t * card;
 
 //semaphores
 extern SemaphoreHandle_t current_measuers_mutex;
@@ -72,7 +75,10 @@ void time_sync_notification_cb(struct timeval *);
 void initialize_sntp(void);
 uint8_t update_ext_rtc_from_int_rtc(void);
 void update_int_rtc_from_ext_rtc(void);
-
+void unmount_sd(void);
+uint8_t init_sd(void);
+//void unmount_sd(sdmmc_card_t *);
+//uint8_t init_sd(sdmmc_card_t &);
 
 
 #endif /* MAIN_APP_H_ */

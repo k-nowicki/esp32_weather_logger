@@ -27,6 +27,9 @@
 //System
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/unistd.h>
+#include <sys/stat.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
@@ -39,9 +42,11 @@
 #include "esp_sntp.h"
 #include <time.h>
 #include "nvs_flash.h"
+#include "esp_vfs_fat.h"
+#include "sdmmc_cmd.h"
+#include "driver/sdmmc_host.h"
 #include <protocol_common.h>
 #include <k_math.h>
-
 
 //App
 #include "setup.h"
@@ -68,6 +73,9 @@ ErriezDS3231 rtc;          // RTC object
 BH1750 lightMeter(BH1750_ADDR);
 Adafruit_BMP280 pressureMeter(&Wire); // I2C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+//SD Card global object
+sdmmc_card_t * card;
 
 //semaphores
 SemaphoreHandle_t current_measuers_mutex;
@@ -133,7 +141,10 @@ void app_main(void){
   }else{
     ESP_LOGI(TAG, "DS3231 Real Time Clock initialized.");
   }
-
+  if(init_sd() != ESP_OK){
+    ESP_LOGE(TAG, "Cannot initialize SD Card!");
+    for(;;); // Don't proceed, loop forever
+  }
 
   ESP_LOGI(TAG, "Initializing NVS flash...");
   ESP_ERROR_CHECK( nvs_flash_init() );
@@ -152,7 +163,7 @@ void app_main(void){
   xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vSDMMCTask, "SDMMC", 18*1024, NULL, SDMMC_TASK_PRIO, NULL, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vSDLOGTask, "SDMMC", 18*1024, NULL, SDLOG_TASK_PRIO, NULL, tskNO_AFFINITY );
 
   //Create and start stats task
   xTaskCreatePinnedToCore(stats_task, "STATS", 2048, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);
