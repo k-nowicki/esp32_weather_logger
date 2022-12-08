@@ -155,9 +155,9 @@ uint8_t update_ext_rtc_from_int_rtc(void){
   time(&now);
   localtime_r(&now, &timeinfo);
   if(rtc.write(&timeinfo))
-    return 0;
+    return ESP_OK;
   else
-    return 1;
+    return ESP_FAIL;
 }
 
 void update_int_rtc_from_ext_rtc(void){

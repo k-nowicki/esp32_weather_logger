@@ -22,13 +22,26 @@
  *
  */
 
+//GPIO_16 - PSRAM
+//GPIO_02 - FLASH
+//GPIO_12 - bootstrap
+//GPIO_04 -
+
 //DHT11 sensor line
-#define GPIO_DHT11    GPIO_NUM_13
+#define GPIO_DHT11    GPIO_NUM_33 //33
 //DS18B20 sensor line
-#define GPIO_DS18B20  GPIO_NUM_16
+#define GPIO_DS18B20  GPIO_NUM_4
 //I2C Bus lines (OLED, RTC, BH1750, BMP280)
-#define I2C_SDA 14
-#define I2C_SCL 15
+#define I2C_SDA GPIO_NUM_13
+#define I2C_SCL GPIO_NUM_0
+//Those are only informative statements, SD pins can not be changed:
+#define SD_CMD_PIN  GPIO_NUM_14
+#define SD_CLK_PIN  GPIO_NUM_15
+#define SD_D0_PIN   GPIO_NUM_2
+//#define SD_D1_PIN   NULL
+//#define SD_D2_PIN   NULL
+//#define SD_D3_PIN   NULL
+
 //I2C Device addrs
 #define OLED_ADDR   0x3c
 #define BH1750_ADDR 0x23
@@ -57,11 +70,12 @@
  *  System Setup
  */
 
-#define STATS_TASK_PRIO     2
+#define SDMMC_TASK_PRIO     10
+#define STATS_TASK_PRIO     11
 #define DISPLAY_TASK_PRIO   13
 #define SENSORS_TASK_PRIO   14
-#define RTC_TASK_PRIO       15
-
+#define DHT11_TASK_PRIO     15
+#define RTC_TASK_PRIO       16
 
 #define STATS_TICKS         pdMS_TO_TICKS(1000)
 #define ARRAY_SIZE_OFFSET   5   //Increase this if print_real_time_stats returns ESP_ERR_INVALID_SIZE
