@@ -163,7 +163,7 @@ void app_main(void){
   xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vSDLOGTask, "SDMMC", 18*1024, NULL, SDLOG_TASK_PRIO, NULL, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vSDLOGTask, "SDLOG", 18*1024, NULL, SDLOG_TASK_PRIO, NULL, tskNO_AFFINITY );
 
   //Create and start stats task
   xTaskCreatePinnedToCore(stats_task, "STATS", 2048, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);

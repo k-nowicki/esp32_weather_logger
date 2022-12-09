@@ -86,6 +86,10 @@
 #define STATS_TICKS         pdMS_TO_TICKS(1000)
 #define ARRAY_SIZE_OFFSET   5   //Increase this if print_real_time_stats returns ESP_ERR_INVALID_SIZE
 
+/*******************************************************************************
+ *  App Setup
+ */
+#define LOGGING_INTERVAL_MS 1000  //Interval between measurements logged to SD card in milliseconds
 
 
 #endif /* MAIN_SETUP_H_ */
