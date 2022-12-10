@@ -97,7 +97,7 @@ void vRTCTask(void*){
   }
   //send notify to logger task that time is synchronized
   if(vSDLOGTaskHandle != NULL){
-      xTaskNotifyIndexed( vSDLOGTaskHandle, 0, 1, eSetValueWithOverwrite );
+      xTaskNotifyIndexed( vSDLOGTaskHandle, LOGGER_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
   }else{
       ESP_LOGE(TAG, "vSDLOGTaskHandle is NULL pointer! WTF!");
   }
