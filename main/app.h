@@ -61,7 +61,8 @@ extern sdmmc_card_t * card;
 extern SemaphoreHandle_t current_measuers_mutex;
 extern SemaphoreHandle_t uart_mutex;
 
-
+//Tasks handlers
+extern TaskHandle_t vSDLOGTaskHandle;
 
 //setup helper functions
 //void initialize_ds18b20(void);
@@ -80,5 +81,14 @@ uint8_t init_sd(void);
 //void unmount_sd(sdmmc_card_t *);
 //uint8_t init_sd(sdmmc_card_t &);
 
+
+/*******************************************************************************
+ * App Definitions
+ * WARNING
+ * These are not settings!
+ * Do not change them unless you know what you are doing!
+ */
+#define LOGGER_RTC_WAIT_FOR_NOTIFY_MS (LOGGING_INTERVAL_MS-20)
+#define LOGGER_NOTIFY_ARRAY_INDEX 0
 
 #endif /* MAIN_APP_H_ */
