@@ -230,8 +230,8 @@ void begin_log_file(const char * filename){
  *
  */
 void end_log_file(const char * filename){
-  FILE *f = fopen(filename, "a+");
-  fseek(f , -2 , SEEK_CUR );   //set position at the last but one byte of file (this will be a comma sign before \n)
+  FILE *f = fopen(filename, "r+b");
+  fseek(f , -2 , SEEK_END );   //set position at the last but one byte of file (this will be a comma sign before \n)
   fputs( "]" , f);             //rewrite it to the end of json format
   fclose(f);
 }
