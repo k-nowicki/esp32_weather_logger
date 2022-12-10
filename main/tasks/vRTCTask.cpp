@@ -95,6 +95,12 @@ void vRTCTask(void*){
     ESP_LOGI(TAG, "Waiting for NTP... (%d/%d)", retry, 30);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
+  //send notify to logger task that time is synchronized
+  if(vSDLOGTaskHandle != NULL){
+      xTaskNotifyIndexed( vSDLOGTaskHandle, 0, 1, eSetValueWithOverwrite );
+  }else{
+      ESP_LOGE(TAG, "vSDLOGTaskHandle is NULL pointer! WTF!");
+  }
   ESP_LOGI(TAG, "RTC Clocks updated with NTP.");
   while (1) {
     //Get time from internal RTC:
@@ -123,7 +129,7 @@ void vRTCTask(void*){
 
     ESP_LOGI(TAG, "System RTC time: %d-%02d-%04d  %02d:%02d:%02d", timeinfo.tm_mday, timeinfo.tm_mon+1,
                    timeinfo.tm_year+1900, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
-    vTaskDelay(pdMS_TO_TICKS(10000));
+    vTaskDelay(pdMS_TO_TICKS(60000));  //wait a minute
   }
 }
 
