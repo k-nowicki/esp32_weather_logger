@@ -90,5 +90,7 @@ uint8_t init_sd(void);
  */
 #define LOGGER_RTC_WAIT_FOR_NOTIFY_MS (LOGGING_INTERVAL_MS-20)
 #define LOGGER_NOTIFY_ARRAY_INDEX 0
+#define LOGGER_NOTIFY_VALUE 1
 
 #endif /* MAIN_APP_H_ */
+

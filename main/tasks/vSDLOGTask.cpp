@@ -86,11 +86,10 @@ void vSDLOGTask(void*){
   measurement measurements;
   FILE *f;
 
-  /**
-   * Wait until RTC sends notify that is synchronized with external RTC
-   */
-  ulTaskNotifyTakeIndexed( 0, pdTRUE, portMAX_DELAY );
-  vTaskDelay(pdMS_TO_TICKS(100));  //for desynchronize RTCTask logs with this task logs to not interfere each other
+  //Wait until RTC sends notify that is synchronized with external RTC
+  ulTaskNotifyTakeIndexed( LOGGER_NOTIFY_ARRAY_INDEX, pdTRUE, portMAX_DELAY );
+  //for desynchronize RTCTask logs with this task logs to not interfere each other
+  vTaskDelay(pdMS_TO_TICKS(100));
 
   xLastWakeTime = xTaskGetTickCount();   //https://www.freertos.org/xtaskdelayuntiltask-control.html
   //Log file must be todays log file
@@ -118,10 +117,11 @@ void vSDLOGTask(void*){
     f = fopen(CURR_LOG_FNAME, "a+");
     if (f == NULL) {
       ESP_LOGE(TAG, "Failed to open log file!");
-      /* TODO: Ensure the file is opened. And if it really can't open- register that fact to be reported to end user later */
-    }else{           //Prepare and store log message
+      /* TODO: Ensure the file is opened. And if it really can't open- register the reason to be reported to end user later.*/
+    }else{
+      //Prepare and store log entry
       now = time(NULL);
-      measurements = get_latest_measurements(); //safely read current values
+      measurements = get_latest_measurements();
       fprintf(f, "{\"time\":\"%lld\",\"int_t\":%3.2F, \"ext_t\":%3.2F, \"humi\":%d, \"sun\":%5.2F, \"press\":%4.2f},\n",
                     static_cast<long long>(now),
                     measurements.iTemp,
@@ -192,20 +192,21 @@ void replace_or_continue_current_log_file(){
 }
 
 /**
- * Change name of current log file to YYMMDD.LOG ex: 221209.LOG
+ * Change name of current log file to YYMMDD.LOG ex: 091222.LOG
  * @param time Pointer to tm struct with time that will be stored in filename
  *
  */
 void rename_log_file(tm * time){
   char arch_log_filename[25];
   uint8_t status = 0;
-  sprintf(arch_log_filename, "%s%02d%02d%02d.LOG", SD_MOUNT_POINT, static_cast<uint8_t>(time->tm_year-100), time->tm_mon+1, time->tm_mday );
+  sprintf(arch_log_filename, "%s/%02d%02d%02d.LOG", SD_MOUNT_POINT, time->tm_mday, time->tm_mon+1,static_cast<uint8_t>(time->tm_year-100)  );
   ESP_LOGI(TAG, "Renaming file %s to %s", CURR_LOG_FNAME, arch_log_filename);
   status = rename(CURR_LOG_FNAME, arch_log_filename);
   if (status != 0) {
     /*
      * TODO: Resolve problem with renaming
-     * If reason is that file already exist, it should open that file, append data from current log, and close
+     * If reason is that file already exist, it should open that file, append data from current log, than close and rename
+     * If reason is different than it should be reported to end user
      */
     ESP_LOGE(TAG, "Log file rename failed with error: %d", status);
 
@@ -230,7 +231,7 @@ void begin_log_file(const char * filename){
  */
 void end_log_file(const char * filename){
   FILE *f = fopen(filename, "a+");
-  fseek (f , -2 , SEEK_CUR );   //set position at the last but one byte of file (this will be a comma sign before \n)
-  fputs ( "]" , f);             //rewrite it to the end of json format
+  fseek(f , -2 , SEEK_CUR );   //set position at the last but one byte of file (this will be a comma sign before \n)
+  fputs( "]" , f);             //rewrite it to the end of json format
   fclose(f);
 }
