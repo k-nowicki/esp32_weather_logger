@@ -137,7 +137,6 @@ void unmount_sd(){
  * Initialize and mount SD Card
  *
  */
-//uint8_t init_sd(sdmmc_card_t & _card){
 uint8_t init_sd(){
   const char *TAG = "";
   esp_err_t ret;
@@ -202,4 +201,13 @@ uint8_t init_sd(){
   // Card has been initialized, print its properties
   sdmmc_card_print_info(stdout, card);
   return ESP_OK;
+}
+
+/**
+ * Reinitialize SD Card
+ *
+ */
+uint8_t reinit_sd(void){
+  unmount_sd();
+  return init_sd();
 }
