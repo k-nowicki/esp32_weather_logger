@@ -121,6 +121,11 @@ void search_i2c(void){
 //  vTaskDelay(pdMS_TO_TICKS(2000)); // wait 2 seconds
 }
 
+/*******************************************************************************
+ * SD Card and filesystem helpers
+ *
+ */
+
 /**
  * Unmount SD Card
  *
@@ -208,6 +213,55 @@ uint8_t init_sd(){
  *
  */
 uint8_t reinit_sd(void){
+  const char *TAG = "";
+  uint8_t err;
+  ESP_LOGW(TAG, "Trying to reinitialize SD Card...");
+  xSemaphoreTake(card_mutex, portMAX_DELAY);
   unmount_sd();
-  return init_sd();
+  err = init_sd();
+  xSemaphoreGive(card_mutex);
+  if(err != ESP_OK){
+    ESP_LOGE(TAG, "Cannot initialize SD Card!");
+  }else{
+    ESP_LOGI(TAG, "SD Card reinitialized successfully.");
+  }
+  return err;
+}
+
+/**
+ * thread-safely checks sd card status, if something is wrong, tries to reinitialize it
+ */
+void ensure_card_works(void){
+  xSemaphoreTake(card_mutex, portMAX_DELAY);
+  uint8_t status = sdmmc_get_status(card);
+  xSemaphoreGive(card_mutex);
+  if(status != ESP_OK)
+    reinit_sd();
+}
+
+/*******************************************************************************
+ * Other
+ *
+ */
+
+/**
+ * Check if date is different than in previous call
+ * @return true if date has changed, false otherwise.
+ */
+bool is_date_changed(){
+  time_t now;
+  struct tm timeinfo;
+  static int yday = -1;
+
+  time(&now);  localtime_r(&now, &timeinfo);
+  //at first call initialize yday as today
+  if(yday == -1)
+    yday = timeinfo.tm_yday;
+  //check if date has changed
+  if(yday != timeinfo.tm_yday){
+    yday = timeinfo.tm_yday;
+    return true;
+  }
+  else
+    return false;
 }
