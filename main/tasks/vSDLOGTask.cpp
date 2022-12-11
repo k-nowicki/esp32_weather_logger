@@ -57,9 +57,9 @@
 bool is_date_changed();
 void replace_or_continue_current_log_file(void);
 void rename_log_file(tm *);
-void begin_log_file(const char *);
-void end_log_file(const char *);
-
+uint8_t begin_log_file(const char *);
+uint8_t end_log_file(const char *);
+uint8_t reinitialize_sdcard(void);
 
 static const char *TAG = "SDLOG";
 #define CURR_LOG_FNAME static_cast<const char *>(SD_MOUNT_POINT"/CURRENT.LOG")
@@ -102,6 +102,7 @@ void vSDLOGTask(void*){
     * date and new current log file is opened. Needs to be done before new log entry.
     */
     if( is_date_changed() ){
+      ESP_LOGI(TAG, "New day, new log file. Renaming current log to yesterdays date.");
       end_log_file(CURR_LOG_FNAME);
       //get time of yesterday:
       file_time_t = time(NULL) - (24 * 60 * 60);
@@ -117,7 +118,8 @@ void vSDLOGTask(void*){
     f = fopen(CURR_LOG_FNAME, "a+");
     if (f == NULL) {
       ESP_LOGE(TAG, "Failed to open log file!");
-      /* TODO: Ensure the file is opened. And if it really can't open- register the reason to be reported to end user later.*/
+      if(sdmmc_get_status(card) != ESP_OK)  //There is probably some kind of problem with SD card
+        reinitialize_sdcard();    //If thats true, try to reinitialize
     }else{
       //Prepare and store log entry
       now = time(NULL);
@@ -137,6 +139,20 @@ void vSDLOGTask(void*){
   }
 }
 
+uint8_t reinitialize_sdcard(void){
+  uint8_t err;
+  ESP_LOGW(TAG, "Trying to reinitialize SD Card...");
+  xSemaphoreTake(card_mutex, portMAX_DELAY);
+  err = reinit_sd();
+  xSemaphoreGive(card_mutex);
+  if(err != ESP_OK){
+    ESP_LOGE(TAG, "Cannot initialize SD Card!");
+  }else{
+    ESP_LOGI(TAG, "SD Card reinitialized successfully.");
+  }
+  return err;
+}
+
 /**
  * Check if date is different than in previous call
  * @return true if date has changed, false otherwise.
@@ -150,6 +166,7 @@ bool is_date_changed(){
   //at first call initialize yday as today
   if(yday == -1)
     yday = timeinfo.tm_yday;
+  //check if date has changed
   if(yday != timeinfo.tm_yday){
     yday = timeinfo.tm_yday;
     return true;
@@ -197,9 +214,9 @@ void replace_or_continue_current_log_file(){
  *
  */
 void rename_log_file(tm * time){
-  char arch_log_filename[25];
+  char arch_log_filename[30];
   uint8_t status = 0;
-  sprintf(arch_log_filename, "%s/%02d%02d%02d.LOG", SD_MOUNT_POINT, time->tm_mday, time->tm_mon+1,static_cast<uint8_t>(time->tm_year-100)  );
+  sprintf(arch_log_filename, "%s/%02d%02d%02d.LOG", SD_MOUNT_POINT, time->tm_mday, time->tm_mon+1, static_cast<uint8_t>(time->tm_year-100)  );
   ESP_LOGI(TAG, "Renaming file %s to %s", CURR_LOG_FNAME, arch_log_filename);
   status = rename(CURR_LOG_FNAME, arch_log_filename);
   if (status != 0) {
@@ -216,22 +233,34 @@ void rename_log_file(tm * time){
 /**
  * Creates or recreates new json log file starting with '[' sign
  * @param filename  Name of file
+ * @return ESP_OK when successful, ESP_FAIL otherwise
  *
  */
-void begin_log_file(const char * filename){
+uint8_t begin_log_file(const char * filename){
   FILE *f = fopen(filename, "w");
-  fprintf(f, "[");
-  fclose(f);
+  if(f != NULL){
+    fprintf(f, "[");
+    fclose(f);
+    return ESP_OK;
+  }else{
+    return ESP_FAIL;
+  }
 }
 
 /**
  * Ends existing json log file with ']' sign
  * @param filename  Name of file to be ended
+ * @return ESP_OK when successful, ESP_FAIL otherwise
  *
  */
-void end_log_file(const char * filename){
+uint8_t end_log_file(const char * filename){
   FILE *f = fopen(filename, "r+b");
-  fseek(f , -2 , SEEK_END );   //set position at the last but one byte of file (this will be a comma sign before \n)
-  fputs( "]" , f);             //rewrite it to the end of json format
-  fclose(f);
+  if(f != NULL){
+    fseek(f , -2 , SEEK_END );   //set position at the last but one byte of file (this will be a comma sign before \n)
+    fputs( "]" , f);             //rewrite it to the end of json format
+    fclose(f);
+    return ESP_OK;
+  }else{
+    return ESP_FAIL;
+  }
 }

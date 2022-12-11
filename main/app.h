@@ -60,6 +60,7 @@ extern sdmmc_card_t * card;
 //semaphores
 extern SemaphoreHandle_t current_measuers_mutex;
 extern SemaphoreHandle_t uart_mutex;
+extern SemaphoreHandle_t card_mutex;
 
 //Tasks handlers
 extern TaskHandle_t vSDLOGTaskHandle;
@@ -78,8 +79,7 @@ uint8_t update_ext_rtc_from_int_rtc(void);
 void update_int_rtc_from_ext_rtc(void);
 void unmount_sd(void);
 uint8_t init_sd(void);
-//void unmount_sd(sdmmc_card_t *);
-//uint8_t init_sd(sdmmc_card_t &);
+uint8_t reinit_sd(void);
 
 
 /*******************************************************************************
@@ -93,4 +93,5 @@ uint8_t init_sd(void);
 #define LOGGER_NOTIFY_VALUE 1
 
 #endif /* MAIN_APP_H_ */
+
 

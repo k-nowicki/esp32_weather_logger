@@ -80,6 +80,7 @@ sdmmc_card_t * card;
 //semaphores
 SemaphoreHandle_t current_measuers_mutex;
 SemaphoreHandle_t uart_mutex;
+SemaphoreHandle_t card_mutex;
 
 //task handlers
 TaskHandle_t vSDLOGTaskHandle = NULL;
@@ -93,6 +94,7 @@ void app_main(void){
   //create semaphores
   current_measuers_mutex = xSemaphoreCreateMutex();
   uart_mutex = xSemaphoreCreateMutex();
+  card_mutex = xSemaphoreCreateMutex();
 
 //  initArduino();
   //Allow other core to finish initialization
