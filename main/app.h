@@ -80,7 +80,8 @@ void update_int_rtc_from_ext_rtc(void);
 void unmount_sd(void);
 uint8_t init_sd(void);
 uint8_t reinit_sd(void);
-
+void ensure_card_works(void);
+bool is_date_changed();
 
 /*******************************************************************************
  * App Definitions

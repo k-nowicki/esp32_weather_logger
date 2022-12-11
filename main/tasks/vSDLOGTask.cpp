@@ -54,12 +54,10 @@
 //App headers
 #include "tasks.h"
 
-bool is_date_changed();
 void replace_or_continue_current_log_file(void);
 void rename_log_file(tm *);
 uint8_t begin_log_file(const char *);
 uint8_t end_log_file(const char *);
-uint8_t reinitialize_sdcard(void);
 
 static const char *TAG = "SDLOG";
 #define CURR_LOG_FNAME static_cast<const char *>(SD_MOUNT_POINT"/CURRENT.LOG")
@@ -67,11 +65,12 @@ static const char *TAG = "SDLOG";
 
 
 /*******************************************************************************
- * @brief Task responsible for logging measurements to file on SD card.
+ * @brief Task responsible for logging measurements to files on SD card.
  *
  * Handles log files
  * Once every second:
  *    - append new measurements to current log file (open file, append, close file)
+ *    - ensures sd card works (this should and probably will be moved to another task)
  * Once every 24 hours (at 00:00:00)
  *    - end and rename current log file to yesterdays date
  *    - begin new log file
@@ -116,10 +115,9 @@ void vSDLOGTask(void*){
      * Done once per period specified by LOGGING_INTERVAL
      */
     f = fopen(CURR_LOG_FNAME, "a+");
-    if (f == NULL) {
+    if (f == NULL) {  //if can not open file
       ESP_LOGE(TAG, "Failed to open log file!");
-      if(sdmmc_get_status(card) != ESP_OK)  //There is probably some kind of problem with SD card
-        reinitialize_sdcard();    //If thats true, try to reinitialize
+      ensure_card_works();
     }else{
       //Prepare and store log entry
       now = time(NULL);
@@ -137,42 +135,6 @@ void vSDLOGTask(void*){
     // Wait for the next cycle exactly 1 second- it is critical to .
     xTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(LOGGING_INTERVAL_MS) );
   }
-}
-
-uint8_t reinitialize_sdcard(void){
-  uint8_t err;
-  ESP_LOGW(TAG, "Trying to reinitialize SD Card...");
-  xSemaphoreTake(card_mutex, portMAX_DELAY);
-  err = reinit_sd();
-  xSemaphoreGive(card_mutex);
-  if(err != ESP_OK){
-    ESP_LOGE(TAG, "Cannot initialize SD Card!");
-  }else{
-    ESP_LOGI(TAG, "SD Card reinitialized successfully.");
-  }
-  return err;
-}
-
-/**
- * Check if date is different than in previous call
- * @return true if date has changed, false otherwise.
- */
-bool is_date_changed(){
-  time_t now;
-  struct tm timeinfo;
-  static int yday = -1;
-
-  time(&now);  localtime_r(&now, &timeinfo);
-  //at first call initialize yday as today
-  if(yday == -1)
-    yday = timeinfo.tm_yday;
-  //check if date has changed
-  if(yday != timeinfo.tm_yday){
-    yday = timeinfo.tm_yday;
-    return true;
-  }
-  else
-    return false;
 }
 
 /**
