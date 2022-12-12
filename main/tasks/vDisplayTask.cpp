@@ -60,6 +60,8 @@ void vDisplayTask(void *arg){
   measurement tmp_measurements;
   time_t now;
   struct tm timeinfo;
+  tcpip_adapter_ip_info_t ip;
+
   display.display();
   vTaskDelay(pdMS_TO_TICKS(200));
   display.clearDisplay();
@@ -78,8 +80,9 @@ void vDisplayTask(void *arg){
     vTaskDelay(pdMS_TO_TICKS(100));
     display.clearDisplay();
     display.setCursor(0, 0);     // Start at top-left corner
-    tmp_measurements = get_latest_measurements(); //safely read current values
-    time(&now);
+    tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip); //get IP address.
+    tmp_measurements = get_latest_measurements();         //safely read current values
+    time(&now);                                           //get time
     localtime_r(&now, &timeinfo);
     display.printf("%0d-%02d-%04d  %02d:%02d:%02d\n", timeinfo.tm_mday, timeinfo.tm_mon+1,
                    timeinfo.tm_year+1900, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
@@ -89,6 +92,7 @@ void vDisplayTask(void *arg){
     display.printf("Sun expo: %5.2F Lux\n", tmp_measurements.lux);
     display.printf("Pressure: %4.2f hPa\n", tmp_measurements.pres);
     display.printf("Altitude: %5.2Fm\n", tmp_measurements.alti);
+    display.printf("IP: " IPSTR, IP2STR(&ip.ip));
     display.display();
   }
 }
