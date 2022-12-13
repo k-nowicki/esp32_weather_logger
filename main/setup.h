@@ -76,14 +76,14 @@
  *  System Setup
  */
 
-#define SDLOG_TASK_PRIO     17
 #define STATS_TASK_PRIO     11
 #define DISPLAY_TASK_PRIO   13
 #define SENSORS_TASK_PRIO   14
 #define DHT11_TASK_PRIO     15
 #define RTC_TASK_PRIO       16
+#define SDLOG_TASK_PRIO     17
 
-#define STATS_TICKS         pdMS_TO_TICKS(1000)
+#define STATS_TICKS         pdMS_TO_TICKS(60*1000)
 #define ARRAY_SIZE_OFFSET   5   //Increase this if print_real_time_stats returns ESP_ERR_INVALID_SIZE
 
 /*******************************************************************************
