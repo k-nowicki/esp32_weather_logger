@@ -186,7 +186,7 @@ void https_server_user_callback(esp_https_server_user_cb_arg_t *user_cb){
 
     const mbedtls_x509_crt *cert;
     const size_t buf_size = 1024;
-    char *buf = calloc(buf_size, sizeof(char));
+    char *buf = (char*)calloc(buf_size, sizeof(char));
     if (buf == NULL) {
         ESP_LOGE(TAG, "Out of memory - Callback execution failed!");
         return;

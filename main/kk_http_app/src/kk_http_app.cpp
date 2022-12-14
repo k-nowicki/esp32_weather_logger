@@ -18,12 +18,13 @@
 
 #include <time.h>
 #include <app.h>
-#ifdef B1000000   //arduino libs loaded in app.h defines those marcos in different way than esp-idf does
-#undef B1000000
-#undef B110
-#endif
-#include "kk_http_server_setup.h"
+//#ifdef B1000000   //arduino libs loaded in app.h defines those marcos in different way than esp-idf does
+//#undef B1000000
+//#undef B110
+//#endif
 #include "kk_http_app.h"
+#include "kk_http_server_setup.h"
+
 
 static const char* TAG = "HTTP";
 

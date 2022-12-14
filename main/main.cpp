@@ -53,10 +53,10 @@
 #include "setup.h"
 #include "tasks/tasks.h"
 #include "app.h"
-#ifdef B1000000   //arduino libs loaded in app.h defines those marcos in different way than esp-idf does
-#undef B1000000
-#undef B110
-#endif
+//#ifdef B1000000   //arduino libs loaded in app.h defines those marcos in different way than esp-idf does
+//#undef B1000000
+//#undef B110
+//#endif
 #include "kk_http_app/src/kk_http_app.h"
 #include "kk_http_app/src/kk_http_server_setup.h"
 
