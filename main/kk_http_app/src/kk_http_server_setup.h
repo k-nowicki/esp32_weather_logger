@@ -20,6 +20,10 @@
 #include <nvs_flash.h>
 #include "esp_netif.h"
 #include "esp_eth.h"
+#ifdef B1000000   //arduino libs loaded in app.h defines those marcos in different way than esp-idf does
+#undef B1000000
+#undef B110
+#endif
 #include "esp_vfs.h"
 #include "protocol_common.h"
 #include <esp_tls_crypto.h>
