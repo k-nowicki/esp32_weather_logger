@@ -6,4 +6,8 @@ idf_component_register(SRCS "main.cpp"
 							"tasks/stats_task.cpp"
 							"tasks/vSDLOGTask.cpp"
 							"app_global_helper.cpp"
-                       INCLUDE_DIRS "." )
+							"tasks/vSDLOGTask.cpp"
+							"kk_http_app/src/kk_http_app.cpp"
+							"kk_http_app/src/kk_http_server_setup.cpp"
+                       INCLUDE_DIRS "." 
+                       EMBED_TXTFILES "kk_http_app/certs/cacert.pem" "kk_http_app/certs/prvtkey.pem")
