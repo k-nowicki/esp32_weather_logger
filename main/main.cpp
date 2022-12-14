@@ -33,6 +33,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include <Wire.h>
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_err.h"
@@ -50,10 +51,14 @@
 
 //App
 #include "setup.h"
-#include "app.h"
 #include "tasks/tasks.h"
-#include "kk_http_app_server.h"
-
+#include "app.h"
+#ifdef B1000000   //arduino libs loaded in app.h defines those marcos in different way than esp-idf does
+#undef B1000000
+#undef B110
+#endif
+#include "kk_http_app/src/kk_http_app.h"
+#include "kk_http_app/src/kk_http_server_setup.h"
 
 extern "C" {
   void app_main(void);

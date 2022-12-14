@@ -17,9 +17,8 @@
 #define MAIN_APP_H_
 
 //Peripheral drivers
-#include "sdmmc_cmd.h"
+#include <sdmmc_cmd.h>
 #include "driver/gpio.h"
-#include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_BMP280.h>

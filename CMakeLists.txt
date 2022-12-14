@@ -14,7 +14,7 @@ set(EXTRA_COMPONENT_DIRS </components/k_math>)
 set(EXTRA_COMPONENT_DIRS </components/BH1750/src>)
 set(EXTRA_COMPONENT_DIRS </components/sntp_sync>)
 set(EXTRA_COMPONENT_DIRS </components/protocol_common)
-set(EXTRA_COMPONENT_DIRS </components/kk_hhtp_server)
+#set(EXTRA_COMPONENT_DIRS </components/kk_hhtp_app)
 
 project(${ProjectId})
 

@@ -55,3 +55,39 @@ menu "SD/MMC Configuration"
     endif  # SOC_SDMMC_USE_GPIO_MATRIX
 
 endmenu
+
+menu "KK HTTP Configuration"
+
+    config KK_BASIC_AUTH
+        bool "Basic Authentication"
+        default n
+        help
+            Basic Authentication is a method for an HTTP user agent (e.g. a web browser)
+            to provide a user name and password when making a request. It is the simplest
+            technique for enforcing access controls to web resources. because it doesn't
+            require cookies, session identifiers, or login pages; rather, it uses standard
+            fields in the HTTP header.
+            Note that, Basic Authentication is not encrypted channel and also easy to retrieve
+            credentials as they are sent in plain text format.
+
+    config KK_BASIC_AUTH_USERNAME
+        string "Basic Authenticate User Name"
+        depends on KK_BASIC_AUTH
+        default "ESP32"
+        help
+            The client's user name which used for basic authenticate.
+
+    config KK_BASIC_AUTH_PASSWORD
+        string "Basic Authenticate Password"
+        depends on KK_BASIC_AUTH
+        default "ESP32Webserver"
+        help
+            The client's password which used for basic authenticate.
+            
+    config KK_ENABLE_HTTPS_USER_CALLBACK
+        bool "Enable user callback with HTTPS Server"
+        select ESP_TLS_SERVER_MIN_AUTH_MODE_OPTIONAL
+        help
+            Enable user callback for esp_https_server which can be used to get SSL context (connection information)
+            E.g. Certificate of the connected client
+endmenu
