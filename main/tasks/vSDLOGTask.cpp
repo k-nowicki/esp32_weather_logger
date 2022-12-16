@@ -60,7 +60,7 @@ uint8_t begin_log_file(const char *);
 uint8_t end_log_file(const char *);
 
 static const char *TAG = "SDLOG";
-#define CURR_LOG_FNAME static_cast<const char *>(SD_MOUNT_POINT"/CURRENT.LOG")
+#define CURR_LOG_FNAME static_cast<const char *>(SD_MOUNT_POINT LOG_FILE_DIR"/CURRENT.LOG")
 
 
 
@@ -176,9 +176,9 @@ void replace_or_continue_current_log_file(){
  *
  */
 void rename_log_file(tm * time){
-  char arch_log_filename[30];
+  char arch_log_filename[35];
   uint8_t status = 0;
-  sprintf(arch_log_filename, "%s/%02d%02d%02d.LOG", SD_MOUNT_POINT, time->tm_mday, time->tm_mon+1, static_cast<uint8_t>(time->tm_year-100)  );
+  sprintf(arch_log_filename, "%s/%02d%02d%02d.LOG", SD_MOUNT_POINT LOG_FILE_DIR, time->tm_mday, time->tm_mon+1, static_cast<uint8_t>(time->tm_year-100)  );
   ESP_LOGI(TAG, "Renaming file %s to %s", CURR_LOG_FNAME, arch_log_filename);
   status = rename(CURR_LOG_FNAME, arch_log_filename);
   if (status != 0) {
