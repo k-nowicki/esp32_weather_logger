@@ -104,13 +104,30 @@ httpd_handle_t start_webserver(const char *base_path){
   // Set URI handlers
   ESP_LOGI(TAG, "Registering URI handlers");
 
-  const httpd_uri_t uri_post = {
+  const httpd_uri_t uri_get_data = {
     .uri      = "/data/*",
     .method   = HTTP_GET,
     .handler  = data_get_handler,
     .user_ctx = (void*)"/data/"
   };
-  httpd_register_uri_handler(server, &uri_post);  //for POST /uri
+  httpd_register_uri_handler(server, &uri_get_data);  //handles get /data/*
+
+  const httpd_uri_t uri_get_set = {
+    .uri      = "/set/*",
+    .method   = HTTP_GET,
+    .handler  = set_get_handler,
+    .user_ctx = server_data
+  };
+  httpd_register_uri_handler(server, &uri_get_set);  //handles GET /set/*
+
+  const httpd_uri_t uri_post_set = {
+    .uri      = "/set/*",
+    .method   = HTTP_POST,
+    .handler  = set_post_handler,
+    .user_ctx = server_data
+  };
+  httpd_register_uri_handler(server, &uri_post_set);  //handles POST /set/*
+
 
   const httpd_uri_t file_get = {
     .uri      = "/*",
@@ -118,7 +135,7 @@ httpd_handle_t start_webserver(const char *base_path){
     .handler  = file_get_handler,
     .user_ctx = server_data
   };
-  httpd_register_uri_handler(server, &file_get);   //for GET  /*
+  httpd_register_uri_handler(server, &file_get);   //handles GET /* (file serving)
 
   return server;
 }

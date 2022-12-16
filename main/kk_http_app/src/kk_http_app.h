@@ -34,12 +34,13 @@
 
 /*#****************************************************************************/
 
+
 /**
  * Handler to download a file kept on the server
- * @param req Request data
+ * @param req Request pointer
  * @return
- *      ESP_OK
- *      ESP_FAIL
+ *      ESP_OK if success
+ *      ESP_FAIL otherwise
  */
 esp_err_t file_get_handler(httpd_req_t *req);
 
@@ -49,6 +50,26 @@ esp_err_t file_get_handler(httpd_req_t *req);
  * @return ESP_OK
  */
 esp_err_t index_html_get_handler(httpd_req_t *req);
+
+/**
+ * \brief Handler to execute HTTP GET /set/ requests
+ *
+ * Recognize command from request uri and tries to execute if command valid.
+ *
+ * @param req Request pointer
+ * @return ESP_OK
+ */
+esp_err_t set_get_handler(httpd_req_t *req);
+
+/**
+ * \brief Handler to execute HTTP POST /set/ requests
+ *
+ * Recognize command from request uri and tries to execute if command valid.
+ *
+ * @param req Request pointer
+ * @return ESP_OK
+ */
+esp_err_t set_post_handler(httpd_req_t *req);
 
 /**
  * Handler to respond with dynamic data
@@ -72,6 +93,14 @@ esp_err_t send_current_measurements(httpd_req_t *req);
  * @return ESP_OK
  */
 esp_err_t send_current_ms(httpd_req_t *req);
+
+/**
+ * Sends confirmation and execute software reset
+ *
+ * @param req Request pointer
+ * @return ESP_OK
+ */
+esp_err_t reset_send_confirmation(httpd_req_t *req);
 
 /**
  *  Set HTTP response content type according to file extension
