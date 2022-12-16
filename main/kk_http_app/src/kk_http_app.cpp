@@ -29,8 +29,17 @@
 static const char* TAG = "HTTP";
 
 
+/*******************************************************************************
+ *    Handlers for defined http methods/paths
+ *******************************************************************************/
+
 /**
- *  Handler to download a file kept on the server
+ * Handler to download a file kept on the server
+ * @param req Request pointer
+ * @return
+ *      ESP_OK if success
+ *      ESP_FAIL otherwise
+ *
  */
 esp_err_t file_get_handler(httpd_req_t *req){
   char filepath[FILE_PATH_MAX];
@@ -53,12 +62,6 @@ esp_err_t file_get_handler(httpd_req_t *req){
   }
 
   if (stat(filepath, &file_stat) == -1) {
-    // If file not present on filesystem check if URI corresponds to one of the hardcoded paths
-//    if (strcmp(filename, "/index.html") == 0) {
-//      return index_html_get_handler(req);
-//    } else if (strcmp(filename, "/favicon.ico") == 0) {
-//      return favicon_get_handler(req);
-//    }
     ESP_LOGE(TAG, "Failed to stat file : %s", filepath);
     /* Respond with 404 Not Found */
     httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "File does not exist");
@@ -110,6 +113,41 @@ esp_err_t file_get_handler(httpd_req_t *req){
 }
 
 /**
+ * \brief Handler to execute HTTP GET /set/ requests
+ *
+ * Recognize command from request uri and tries to execute if command valid.
+ *
+ * @param req Request pointer
+ * @return ESP_OK
+ */
+esp_err_t set_get_handler(httpd_req_t *req){
+  //perform as if it were a POST
+  return set_post_handler(req);
+}
+
+/**
+ * \brief Handler to execute HTTP POST /set/ requests
+ *
+ * Recognize command from request uri and tries to execute if command valid.
+ *
+ * @param req Request pointer
+ * @return ESP_OK
+ */
+esp_err_t set_post_handler(httpd_req_t *req){
+//  req->uri
+  if(strncmp(req->uri, "/set/reset", 10) == 0){
+    return reset_send_confirmation(req);
+//  }else if(strncmp(req->uri + strlen((char*)req->user_ctx), "current_ms.json", 25) == 0){
+//    return send_current_ms(req);
+  }else{
+    ESP_LOGE(TAG, "Failed to recognize path: %s", req->uri);
+    /* Respond with 404 Not Found */
+    httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "Asset does not exist");
+    return ESP_FAIL;
+  }
+}
+
+/**
  * Handler to respond with dynamic data
  * @param req Request pointer
  * @return ESP_OK
@@ -127,6 +165,20 @@ esp_err_t data_get_handler(httpd_req_t *req){
     return ESP_FAIL;
   }
 }
+
+/**
+ * Handler to redirect incoming GET request for / to /index.html
+ */
+esp_err_t index_html_get_handler(httpd_req_t *req){
+  httpd_resp_set_status(req, "301 Moved Permanently");
+  httpd_resp_set_hdr(req, "Location", "/index.htm");
+  httpd_resp_send(req, NULL, 0);  // Response body can be empty
+  return ESP_OK;
+}
+
+/*******************************************************************************
+ *    Executive methods for specific request uris
+ *******************************************************************************/
 
 /**
  * Sends json formatted fresh measurements as a http response
@@ -173,15 +225,27 @@ esp_err_t send_current_ms(httpd_req_t *req){
 }
 
 /**
- * Handler to redirect incoming GET request for / to /index.html
+ * Sends confirmation and execute software reset
+ *
+ * @param req Request pointer
+ * @return ESP_OK
  */
-esp_err_t index_html_get_handler(httpd_req_t *req){
-  httpd_resp_set_status(req, "301 Moved Permanently");
-  httpd_resp_set_hdr(req, "Location", "/index.htm");
-  httpd_resp_send(req, NULL, 0);  // Response body can be empty
+esp_err_t reset_send_confirmation(httpd_req_t *req){
+  httpd_resp_set_status(req, "203 Reset Content");
+  strcpy((char*)req->uri, "/reset.htm");    //change uri to match real file
+  file_get_handler(req);            //send reset.htm page
+  vTaskDelay(pdMS_TO_TICKS(1000));  //wait for response to be physically sent
+  ESP_LOGW(TAG, "Performing system restart...");
+  ///TODO: something blocks esp_reset function, http server stops here forever
+//  esp_restart();                    //perform software restart
+  ESP_LOGW(TAG, "This message should never print.");
+//  for(;;) vTaskDelay(pdMS_TO_TICKS(1000));  //wait forever
   return ESP_OK;
 }
 
+/*******************************************************************************
+ *    Helper methods for http app
+ *******************************************************************************/
 
 /**
  *  Set HTTP response content type according to file extension
