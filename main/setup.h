@@ -82,8 +82,9 @@
 #define DHT11_TASK_PRIO     15
 #define RTC_TASK_PRIO       16
 #define SDLOG_TASK_PRIO     17
+#define HTTP_TASK_PRIO     STATS_TASK_PRIO - 1
 
-#define STATS_TICKS         pdMS_TO_TICKS(60*1000)
+#define STATS_TICKS         pdMS_TO_TICKS(10*1000)
 #define ARRAY_SIZE_OFFSET   5   //Increase this if print_real_time_stats returns ESP_ERR_INVALID_SIZE
 
 /*******************************************************************************

@@ -29,6 +29,7 @@
 #include <esp_tls_crypto.h>
 #include <esp_http_server.h>
 #include <esp_https_server.h>
+#include <setup.h>
 
 
 #ifndef COMPONENTS_KK_HTTP_SERVER_SETUP_

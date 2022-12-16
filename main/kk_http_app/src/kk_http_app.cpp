@@ -234,10 +234,10 @@ esp_err_t reset_send_confirmation(httpd_req_t *req){
   httpd_resp_set_status(req, "203 Reset Content");
   strcpy((char*)req->uri, "/reset.htm");    //change uri to match real file
   file_get_handler(req);            //send reset.htm page
-  vTaskDelay(pdMS_TO_TICKS(1000));  //wait for response to be physically sent
+  vTaskDelay(pdMS_TO_TICKS(3000));  //wait for response to be physically sent
   ESP_LOGW(TAG, "Performing system restart...");
-  ///TODO: something blocks esp_reset function, http server stops here forever
-//  esp_restart();                    //perform software restart
+  ///TODO: something sometimes blocks esp_reset function and http server stops here forever
+  esp_restart();                    //perform software restart
   ESP_LOGW(TAG, "This message should never print.");
 //  for(;;) vTaskDelay(pdMS_TO_TICKS(1000));  //wait forever
   return ESP_OK;
