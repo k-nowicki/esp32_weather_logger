@@ -58,6 +58,7 @@ httpd_handle_t start_webserver(const char *base_path){
   httpd_handle_t server = NULL;
   httpd_ssl_config_t conf = HTTPD_SSL_CONFIG_DEFAULT();
 
+  conf.httpd.task_priority = HTTP_TASK_PRIO;
   static struct file_server_data *server_data = NULL;
 
   if (server_data) {
