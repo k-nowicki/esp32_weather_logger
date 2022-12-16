@@ -74,6 +74,7 @@ esp_err_t file_get_handler(httpd_req_t *req){
   }
 
   ESP_LOGI(TAG, "Sending file : %s (%ld bytes)...", filename, file_stat.st_size);
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
   set_content_type_from_file(req, filename);
 
   // Retrieve the pointer to scratch buffer for temporary storage
@@ -115,19 +116,15 @@ esp_err_t file_get_handler(httpd_req_t *req){
  */
 esp_err_t data_get_handler(httpd_req_t *req){
 //  req->uri
-  if (strncmp(req->uri + strlen((char*)req->user_ctx), "current_measurements.json", 25) == 0) {
-      return send_current_measurements(req);
-//  } else if (strncmp(req->uri, "current_measurements", 3) == 0) {
-//    handle_post();
-//  } else if (strncmp(req->uri, "PUT", 3) == 0) {
-//    handle_put();
-//  } else if (strncmp(req->uri, "DELETE", 6) == 0) {
-//    handle_delete();
-  } else {
-      ESP_LOGE(TAG, "Failed to recognize path: %s", req->uri);
-      /* Respond with 404 Not Found */
-      httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "Asset does not exist");
-      return ESP_FAIL;
+  if(strncmp(req->uri + strlen((char*)req->user_ctx), "current_measurements.json", 25) == 0){
+    return send_current_measurements(req);
+  }else if(strncmp(req->uri + strlen((char*)req->user_ctx), "current_ms.json", 25) == 0){
+    return send_current_ms(req);
+  }else{
+    ESP_LOGE(TAG, "Failed to recognize path: %s", req->uri);
+    /* Respond with 404 Not Found */
+    httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "Asset does not exist");
+    return ESP_FAIL;
   }
 }
 
@@ -140,6 +137,7 @@ esp_err_t data_get_handler(httpd_req_t *req){
 esp_err_t send_current_measurements(httpd_req_t *req){
   measurement measurements;
   time_t now;
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
   httpd_resp_set_type(req, "application/x-javascript");
   char * respond_buf = (char*)malloc(512);
   now = time(NULL);
@@ -152,6 +150,25 @@ esp_err_t send_current_measurements(httpd_req_t *req){
                 measurements.lux,
                 measurements.pres);
   httpd_resp_send(req, respond_buf, -1);  // Response body can be empty
+  free(respond_buf);
+  return ESP_OK;
+}
+
+/**
+ * Sends json formatted up time as a http response
+ *
+ * @param req Request pointer
+ * @return ESP_OK
+ */
+esp_err_t send_current_ms(httpd_req_t *req){
+  int64_t us = 0;
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+  httpd_resp_set_type(req, "application/x-javascript");
+  char * respond_buf = (char*)malloc(512);
+  us = esp_timer_get_time();
+  sprintf(respond_buf, "{\"value\":\"%lld\"}\n", us);
+  httpd_resp_send(req, respond_buf, -1);  // Response body can be empty
+  free(respond_buf);
   return ESP_OK;
 }
 
