@@ -66,6 +66,14 @@ esp_err_t data_get_handler(httpd_req_t *req);
 esp_err_t send_current_measurements(httpd_req_t *req);
 
 /**
+ * Sends json formatted up time as a http response
+ *
+ * @param req Request pointer
+ * @return ESP_OK
+ */
+esp_err_t send_current_ms(httpd_req_t *req);
+
+/**
  *  Set HTTP response content type according to file extension
  * @param req Request data
  * @param filename Pointer to filename
