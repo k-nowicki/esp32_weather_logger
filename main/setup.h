@@ -89,7 +89,8 @@
 /*******************************************************************************
  *  App Setup
  */
+//Loggging settings
 #define LOGGING_INTERVAL_MS 1000  //Interval between measurements logged to SD card in milliseconds
-
+#define LOG_FILE_DIR "/www/logs"  //directory holding logs without mount point (ex: "/www/logs" puts logs in SD_MOUNT_POINT/www/logs/logname.log)
 
 #endif /* MAIN_SETUP_H_ */
