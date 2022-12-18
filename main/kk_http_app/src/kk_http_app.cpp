@@ -105,7 +105,7 @@ esp_err_t file_get_handler(httpd_req_t *req){
   fclose(fd);
   ESP_LOGI(TAG, "File sending complete");
   // Respond with an empty chunk to signal HTTP response completion
-#ifdef CONFIG_EXAMPLE_HTTPD_CONN_CLOSE_HEADER
+#ifdef CONFIG_KK_HTTPD_CONN_CLOSE_HEADER
   httpd_resp_set_hdr(req, "Connection", "close");
 #endif
   httpd_resp_send_chunk(req, NULL, 0);
@@ -201,6 +201,9 @@ esp_err_t send_current_measurements(httpd_req_t *req){
                 (int)(measurements.humi),
                 measurements.lux,
                 measurements.pres);
+#ifdef CONFIG_KK_HTTPD_CONN_CLOSE_HEADER
+  httpd_resp_set_hdr(req, "Connection", "close");
+#endif
   httpd_resp_send(req, respond_buf, -1);  // Response body can be empty
   free(respond_buf);
   return ESP_OK;
@@ -216,6 +219,9 @@ esp_err_t send_current_ms(httpd_req_t *req){
   int64_t us = 0;
   httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
   httpd_resp_set_type(req, "application/x-javascript");
+#ifdef CONFIG_KK_HTTPD_CONN_CLOSE_HEADER
+  httpd_resp_set_hdr(req, "Connection", "close");
+#endif
   char * respond_buf = (char*)malloc(512);
   us = esp_timer_get_time();
   sprintf(respond_buf, "{\"value\":\"%lld\"}\n", us);

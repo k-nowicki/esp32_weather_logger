@@ -95,12 +95,19 @@ void vRTCTask(void*){
     ESP_LOGI(TAG, "Waiting for NTP... (%d/%d)", retry, 30);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
-  //send notify to logger task that time is synchronized
-  if(vSDLOGTaskHandle != NULL){
-      xTaskNotifyIndexed( vSDLOGTaskHandle, LOGGER_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
+  //send notify to csv logger task that time is synchronized
+  if(vSDCSVLGTaskHandle != NULL){
+      xTaskNotifyIndexed( vSDCSVLGTaskHandle, CSV_LOGGER_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
   }else{
-      ESP_LOGE(TAG, "vSDLOGTaskHandle is NULL pointer! WTF!");
+      ESP_LOGE(TAG, "vSDCSVLGTaskHandle is NULL pointer! WTF!");
   }
+  //send notify to js logger task that time is synchronized
+  if(vSDJSLGTaskHandle != NULL){
+      xTaskNotifyIndexed( vSDJSLGTaskHandle, JS_LOGGER_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
+  }else{
+      ESP_LOGE(TAG, "vSDJSLGTaskHandle is NULL pointer! WTF!");
+  }
+
   ESP_LOGI(TAG, "RTC Clocks updated with NTP.");
   while (1) {
     //Get time from internal RTC:
