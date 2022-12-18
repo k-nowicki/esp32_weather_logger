@@ -62,7 +62,8 @@ extern SemaphoreHandle_t uart_mutex;
 extern SemaphoreHandle_t card_mutex;
 
 //Tasks handlers
-extern TaskHandle_t vSDLOGTaskHandle;
+extern TaskHandle_t vSDCSVLGTaskHandle;
+extern TaskHandle_t vSDJSLGTaskHandle;
 
 //setup helper functions
 //void initialize_ds18b20(void);
@@ -89,7 +90,8 @@ bool is_date_changed();
  * Do not change them unless you know what you are doing!
  */
 #define LOGGER_RTC_WAIT_FOR_NOTIFY_MS (LOGGING_INTERVAL_MS-20)
-#define LOGGER_NOTIFY_ARRAY_INDEX 0
+#define CSV_LOGGER_NOTIFY_ARRAY_INDEX 0
+#define JS_LOGGER_NOTIFY_ARRAY_INDEX 0
 #define LOGGER_NOTIFY_VALUE 1
 
 #endif /* MAIN_APP_H_ */

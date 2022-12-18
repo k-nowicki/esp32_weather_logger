@@ -90,4 +90,11 @@ menu "KK HTTP Configuration"
         help
             Enable user callback for esp_https_server which can be used to get SSL context (connection information)
             E.g. Certificate of the connected client
+            
+    config KK_HTTPD_CONN_CLOSE_HEADER
+        bool "Send connection close header from request handlers"
+        default y
+        help
+            If this config item is set, Connection: close header will be set in handlers.
+            This closes HTTP connection and frees the server socket instantly.
 endmenu

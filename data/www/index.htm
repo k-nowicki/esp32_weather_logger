@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" /> 
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>ESP32 Weather Station</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dosis:wght@600&display=swap" rel="stylesheet"> 
+    <!-- Latest compiled JavaScript -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon.png">
+    <link href="css/style.css" rel="stylesheet" type="text/css" />
+    <script src="js/mess.js"></script>
+  </head>
+
+  <body onload="GetMeasurements()">
+      
+    <div class="container">
+      <div class="row justify-content-md-left mb-3  pt-3">
+        <h1>ESP32 Weather Station</h1>
+      </div>
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link active" href="index.htm">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="history.htm">History</a>
+        </li>
+      </ul>
+    </div>    
+    
+    <div class="container rounded  text-dark  ">
+      <div class="row justify-content-md-center mb-3 mt-1">
+        <div class="col-12">        
+          <div id="errors"></div>
+        </div>
+      </div>
+      
+      <div class="card border-white border-muted mb-3">
+        <div class="card-header border-white h5">
+          <div id="current_datetime">?????????</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container text-dark">
+      
+      <div class="row summary">
+        <div class="col-md-2 col-sm-4">
+          <div class="card  border-light">
+            <div class="card-body rounded bg-light">
+              <span class="card-title h6">Extern temp: <span id="ext_t_display">?????</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-4">
+          <div class="card border-light">
+            <div class="card-body rounded bg-light">
+              <span class="card-title h6">Intern temp: <span  id="int_t_display">?????</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-4">
+          <div class="card border-light">
+            <div class="card-body rounded bg-light">
+              <span class="card-title h6">Pressure: <span  id="press_display">?????</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-4">
+          <div class="card border-light">
+            <div class="card-body rounded bg-light">
+              <span class="card-title h6">Humidity: <span  id="humi_display">?????</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-4">
+          <div class="card border-light">
+            <div class="card-body rounded bg-light">
+              <span class="card-title h6">Wind sped: <span  id="wind_display">?????</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-4">
+          <div class="card border-light">
+            <div class="card-body rounded bg-light">
+              <span class="card-title h6">Illuminance : <span  id="sun_display">?????</span></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="row gauges">
+
+        <div class="col-xl-3 col-sm-6" align="center">
+          <div class="card border-white">
+            <div class="card-body">
+              <canvas id="Canvas0"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6" align="center">
+          <div class="card border-white">
+            <div class="card-body">
+              <canvas id="Canvas1"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-6 col-sm-12">
+
+          <div class="row">
+            <div class="col-lg-6 col-sm-6"  align="center">
+              <div class="card border-white">
+                <div class="card-body">
+                  <canvas id="Canvas2"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-6 col-sm-6" align="center">
+              <div class="card border-white">
+                <div class="card-body">
+                  <canvas id="Canvas3"></canvas>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="row">
+            <div class="col-12" align="center">
+              <canvas id="Canvas4"></canvas>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12" align="center">
+              <canvas id="Canvas5"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="container chart">
+      
+      <div class="card border-white mb-12">
+        <div class="card-header">
+          Charts
+        </div>
+        <div class="card-body">
+          
+          <div class="row justify-content-md-center">
+            <h5 class="card-title">Charts goes here</h5>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="container menagement">
+
+      <div class="card border-danger">
+        <div class="card-header">
+          Menagement
+        </div>
+        <div class="card-body">
+          <h5 class="card-title"></h5>
+          <div class="row">
+            <div class="col-6 justify-content-left">
+              <input id="checkbox3" type="button" class="btn btn-danger"  onclick="requestReset()" value="Restart" title="Kliknij aby zrestartować kontroler" />
+            </div>
+            <!-- <div class="col-2">
+              <span></span>
+            </div> -->
+            <div class="col-6 " align="right">
+              Runtime: 
+              <span id="current_ms">?????????</span>
+              <input type="button" class="btn btn-secondary" onclick="DoCommand('get', 'current_ms', '')" value="Refresh" />
+            </div>  
+          </div>
+        </div>
+      </div>
+
+    </div>
+    
+    <div class="container mt-5 mb-3 text-center footer">
+      <div class="row">
+        <div class="col">by KNowicki/KindKomp @ 2022<a href="http://KindKomp.pl"> KindKomp.pl </a></div>
+      </div>
+    </div>
+    
+        <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script> -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://canvas-gauges.com/download/latest/all/gauge.min.js"></script>
+    <script src="js/logic.js"></script>
+  </body>
+</html>

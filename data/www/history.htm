@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" /> 
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>ESP32 Weather Station > History</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+    <script src="https://rawgit.com/nodeca/js-yaml/master/dist/js-yaml.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dosis:wght@600&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon.png">
+    <link href="css/style.css" rel="stylesheet" type="text/css" />
+  </head>
+
+  <body>
+    
+      
+    <div class="container">
+      <div class="row justify-content-md-left mb-3  pt-3">
+        <h1>ESP32 Weather Station > History</h1>
+      </div>
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a class="nav-link " href="index.htm">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="history.htm">History</a>
+        </li>
+      </ul>
+    </div>    
+    
+    <div class="container rounded  text-dark  ">
+      <div class="row justify-content-md-center mb-3 mt-1">
+        <div class="col-12">        
+          <div id="errors"></div>
+        </div>
+      </div>
+
+      <div class="row mb-3 justify-content-md-center">
+        <div class="col-13"> 
+          <input class="btn btn-primary" id="button0" type="button" onclick="SwitchCSVLog(0)" value="DATA_0.log" title="Kliknij aby Wczytać log nr 0" />
+          <input class="btn btn-primary" id="button1" type="button" onclick="SwitchCSVLog(1)" value="DATA_1.log" title="Kliknij aby Wczytać log nr 1" />
+          <input class="btn btn-primary" id="button2" type="button" onclick="SwitchCSVLog(2)" value="DATA_2.log" title="Kliknij aby Wczytać log nr 2" />
+          <input class="btn btn-primary" id="button3" type="button" onclick="SwitchCSVLog(3)" value="DATA_3.log" title="Kliknij aby Wczytać log nr 3" />
+          <input class="btn btn-primary" id="button4" type="button" onclick="SwitchCSVLog(4)" value="DATA_4.log" title="Kliknij aby Wczytać log nr 4" />
+          <input class="btn btn-primary" id="button5" type="button" onclick="SwitchCSVLog(5)" value="DATA_5.log" title="Kliknij aby Wczytać log nr 5" />
+          <input class="btn btn-primary" id="button6" type="button" onclick="SwitchCSVLog(6)" value="DATA_6.log" title="Kliknij aby Wczytać log nr 6" />
+          <input class="btn btn-primary" id="button7" type="button" onclick="SwitchCSVLog(7)" value="DATA_7.log" title="Kliknij aby Wczytać log nr 7" />
+          <input class="btn btn-primary" id="button8" type="button" onclick="SwitchCSVLog(8)" value="DATA_8.log" title="Kliknij aby Wczytać log nr 8" />
+          <input class="btn btn-primary" id="button9" type="button" onclick="SwitchCSVLog(9)" value="DATA_9.log" title="Kliknij aby Wczytać log nr 9" />
+        </div>
+      </div>
+      
+      <div class="card border-muted mb-3">
+        <div class="card-header">
+          Historic Data Charts
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-12">
+              <div class="chart text-danger text-center" id="chartContainer1" >
+                ^ Choose log file above (0 is today, 1 is yesterday and so on) ^
+              </div>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-12">
+              <div class="chart" id="chartContainer2" ></div>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-12">
+              <div class="chart" id="chartContainer3" ></div>
+            </div>
+          </div>
+          
+          <div class="row mb-3">
+            <div class="col-12">
+              <div class="chart" id="chartContainer4" ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="container pt-3 mb-3">
+      <div class="card border-muted mb-3">
+        <div class="card-header">
+          Bugs reported in logfile
+        </div>
+        <div id="log_errors" class="card-body">
+          <ol id="log_errors_list"> </ol>
+        </div>
+
+    </div>
+    <div class="container mt-5 mb-3 text-center footer">
+      <div class="row">
+        <div class="col">by KNowicki/KindKomp @ 2022<a href="http://KindKomp.pl"> KindKomp.pl </a></div>
+      </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="js/papaparse.min.js"></script>
+    <script src="js/chartlg.js"></script>
+  </body>
+</html>

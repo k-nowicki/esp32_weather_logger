@@ -39,9 +39,10 @@ Instructions on how to connect and flash esp32 can be found also on [espressiff 
   - WiFi connectivity (with credentials configured by menuconfig for now)
   - SD card with file system (sadly requires physical hacking of the esp32-cam board *)
   - Logging of measurements in json formatted logs 
-  - HTTP(S) server (serve files from SD and respond to API calls; but no client-side JS app yet)
+  - Logging of measurements in CSV formatted logs (about 2.5 times denser than json)
+  - HTTP(S) server (serve files from SD and respond to API calls)
+  - Web application files added (put the /www directory in root dir of SD card)
   
   
   *) DHT11 sensor needs to be connected to GPIO33 which on the board is not connected to any pin. Instead Adafruit designed the board so that the GPIO33 (which unlike any other available pin has no second function) is connected exclusively to onboard LED. 
-If above still hangs picture with dht11 connected by yellow wire to one of the boards edge pins, then look to setup.h for real definitions of working connections.
 It may be that connections can be rearanged in the way that everyfing fits nicely, but this needs more research...

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" /> 
+    <meta http-equiv="refresh" content="16">
+    <title>ESP32 Weather Station</title>
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon.png">
+    <link href="css/style.css" rel="stylesheet" type="text/css" />
+    <script src="js/mess.js"></script>
+  </head>
+
+  <body onload="move()">
+	<h2>Wait for station to restart</h2> 
+	<p>
+		If the page won't refresh automatically, refresh your browser using F5 or ctrl+shift+R
+	</p>
+	<p>
+		If the page still won't load try to check device IP address, it may change depending on device and router settings.
+	</p>
+	<p>
+		Restart should take about 1 minute.
+	</p>
+	
+	  
+	<div class="grey">
+		<div id="myBar" class="bar cyan" style="height:24px;width:1%"></div>
+	</div>
+	<span id="counter">15</span>
+
+
+	<script>
+	function move() {
+	  var elem = document.getElementById("myBar");
+	  var counter = document.getElementById("counter");
+	  var width = 1;
+	  var id = setInterval(frame, 150);
+	  function frame() {
+		if((width % 7)==0) counter.innerHTML -=1;
+		if (width >= 100) {
+		  clearInterval(id);
+		} else {
+		  width++;
+		  elem.style.width = width + '%';
+		}
+	  }
+	}
+	</script>
+</body>
+
+</html>

@@ -88,8 +88,8 @@ SemaphoreHandle_t uart_mutex;
 SemaphoreHandle_t card_mutex;
 
 //task handlers
-TaskHandle_t vSDLOGTaskHandle = NULL;
-
+TaskHandle_t vSDCSVLGTaskHandle = NULL;
+TaskHandle_t vSDJSLGTaskHandle = NULL;
 
 /*******************************************************************************
  *  App Main
@@ -169,13 +169,16 @@ void app_main(void){
   //DS18B20 Initialization
 //  initialize_ds18b20();
 
-  //Create business tasks
+  //Create business tasks:
   xTaskCreatePinnedToCore( vRTCTask, "RTC", 3096, NULL, RTC_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vSDLOGTask, "SDLOG", 6*1024, NULL, SDLOG_TASK_PRIO, &vSDLOGTaskHandle, tskNO_AFFINITY );
+  //Loggers
+  xTaskCreatePinnedToCore( vSDCSVLGTask, "SDCSVLG", 6*1024, NULL, SDCSVLG_TASK_PRIO, &vSDCSVLGTaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vSDJSLGTask, "SDJSLG", 6*1024, NULL, SDJSLG_TASK_PRIO, &vSDJSLGTaskHandle, tskNO_AFFINITY );
   //Create and start stats task
   xTaskCreatePinnedToCore(stats_task, "STATS", 2048, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);
 }
+
 
