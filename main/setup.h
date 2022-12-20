@@ -81,8 +81,9 @@
 #define SENSORS_TASK_PRIO   14
 #define DHT11_TASK_PRIO     15
 #define RTC_TASK_PRIO       16
-#define SDCSVLG_TASK_PRIO   17
-#define SDJSLG_TASK_PRIO    17
+#define SDAVGLG_TASK_PRIO   17
+#define SDCSVLG_TASK_PRIO   18
+#define SDJSLG_TASK_PRIO    18
 #define HTTP_TASK_PRIO     DISPLAY_TASK_PRIO
 
 #define STATS_TICKS         pdMS_TO_TICKS(10*1000)
@@ -94,5 +95,7 @@
 //Loggging settings
 #define LOGGING_INTERVAL_MS 1000  //Interval between measurements logged to SD card in milliseconds
 #define LOG_FILE_DIR "/www/logs"  //directory holding logs without mount point (ex: "/www/logs" puts logs in SD_MOUNT_POINT/www/logs/logname.log)
+#define AVG_LOG_FILE_DIR "/www/logs/avg"  //directory holding avg logs without mount point (ex: "/www/avg/logs")
+#define AVG_MESUREMENTS_NO 60    //how many measurements takes to calculate average
 
 #endif /* MAIN_SETUP_H_ */

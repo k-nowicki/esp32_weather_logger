@@ -1,5 +1,5 @@
 /* KK Weather Station
- * SDLOG_TASK_PRIO Task
+ * SDAVGLG_TASK_PRIO Task
  *
  * Platform: ESP32 (Tested on ESP32-CAM Development Board)
  * See project documentation for more detailed description.
@@ -54,23 +54,25 @@
 //App headers
 #include "tasks.h"
 
-static void replace_or_continue_current_jslg_file(void);
-static void rename_jslg_file(tm *);
+static void replace_or_continue_current_avglg_file(void);
+static void rename_avglg_file(tm *);
 static bool is_date_changed();
-uint8_t begin_jslg_file(const char *);
-uint8_t end_jslg_file(const char *);
+extern uint8_t begin_csvlg_file(const char *);
+extern uint8_t end_csvlg_file(const char *);
 
-static const char *TAG = "SDJSLG";
-#define CURR_JSLG_FNAME static_cast<const char *>(SD_MOUNT_POINT LOG_FILE_DIR"/CURRENT.JSO")
+static const char *TAG = "SDAVGLG";
+#define CURR_AVGLG_FNAME static_cast<const char *>(SD_MOUNT_POINT AVG_LOG_FILE_DIR"/CURRENT.CSV")
 
 
 
 /*******************************************************************************
- * @brief Task responsible for logging measurements to files on SD card.
+ * @brief Task responsible for logging average measurements to CSV files on SD card.
  *
  * Handles log files
- * Once every second:
- *    - append new measurements to current log file (open file, append, close file)
+ * Once every LOGGING_INTERVAL_MS:
+ *    - collect measurements for averaging
+ * Once every AVG_MESUREMENTS_NO:
+ *    - append new measurements to current avg log file (open file, append, close file)
  *    - ensures sd card works (this should and probably will be moved to another task)
  * Once every 24 hours (at 00:00:00)
  *    - end and rename current log file to yesterdays date
@@ -79,64 +81,101 @@ static const char *TAG = "SDJSLG";
  * @param arg
  *
  */
-void vSDJSLGTask(void*){
+void vSDAVGLGTask(void*){
   TickType_t xLastWakeTime;
-  time_t now, file_time_t;
+  time_t file_time_t;
   struct tm file_tm;
-  measurement measurements;
+  measurement measurements, avg_measurements;
+  measurement measurements_buf[AVG_MESUREMENTS_NO];
+  static int m_cnt = 0;
+  static unsigned long long avg_time = 0;
   FILE *f;
 
   //Wait until RTC sends notify that is synchronized with external RTC
-  ulTaskNotifyTakeIndexed( JS_LOGGER_NOTIFY_ARRAY_INDEX, pdTRUE, portMAX_DELAY );
+  ulTaskNotifyTakeIndexed( AVG_LOGGER_NOTIFY_ARRAY_INDEX, pdTRUE, portMAX_DELAY );
   //for desynchronize RTCTask logs with this task logs to not interfere each other
-  vTaskDelay(pdMS_TO_TICKS(150));
+  vTaskDelay(pdMS_TO_TICKS(450));
 
   xLastWakeTime = xTaskGetTickCount();   //https://www.freertos.org/xtaskdelayuntiltask-control.html
   //Log file must be todays log file
   //if older log file exists and hasn't been renamed should be ended and renamed now
-  replace_or_continue_current_jslg_file();
-  ESP_LOGI(TAG, "Start logging measurements to JSON SD card.");
+  replace_or_continue_current_avglg_file();
+  ESP_LOGI(TAG, "Start logging measurements to AVG CSV on SD card.");
   while (1) {
+
    /**
     * If date has changed than current log file is ended, renamed to yesterdays
-    * date and new current log file is opened. Needs to be done before new log entry.
+    * date and new current log file is opened.
     */
     if( is_date_changed() ){
       ESP_LOGI(TAG, "New day, new log file. Renaming current log to yesterdays date.");
-      end_jslg_file(CURR_JSLG_FNAME);
+      end_csvlg_file(CURR_AVGLG_FNAME);
       //get time of yesterday:
       file_time_t = time(NULL) - (24 * 60 * 60);
       localtime_r(&file_time_t, &file_tm);
       //Rename original file
-      rename_jslg_file(&file_tm);
-      begin_jslg_file(CURR_JSLG_FNAME);
-    }
-    /**
-     * Store new data entry to log file
-     * Done once per period specified by LOGGING_INTERVAL
-     */
-    f = fopen(CURR_JSLG_FNAME, "a+");
-    if (f == NULL) {  //if can not open file
-      ESP_LOGE(TAG, "Failed to open log file!");
-      ensure_card_works();
-    }else{
-      //Prepare and store log entry
-      now = time(NULL);
-      measurements = get_latest_measurements();
-      fprintf(f, "{\"time\":\"%lld\",\"int_t\":%3.2F, \"ext_t\":%3.2F, \"humi\":%d, \"sun\":%5.2F, \"press\":%4.2f},\n",
-                    static_cast<long long>(now),
-                    measurements.iTemp,
-                    measurements.eTemp,
-                    static_cast<int>(measurements.humi),
-                    measurements.lux,
-                    measurements.pres);
-      fclose(f);
+      rename_avglg_file(&file_tm);
+      begin_csvlg_file(CURR_AVGLG_FNAME);
     }
 
+   /**
+    * Store new data entry to buffer once every execution
+    */
+    measurements_buf[m_cnt++] = get_latest_measurements();
+
+    /**
+     * If get AVG_MESUREMENTS_NO measurements, then average them and store
+     */
+    if(m_cnt >= AVG_MESUREMENTS_NO){
+      for(int i = 0; i < m_cnt; i++){
+        measurements.eTemp += measurements_buf[i].eTemp;
+        measurements.humi += measurements_buf[i].humi;
+        measurements.iTemp += measurements_buf[i].iTemp;
+        measurements.lux += measurements_buf[i].lux;
+        measurements.pres += measurements_buf[i].pres;
+        avg_time += measurements_buf[i].time;
+      }
+      //average all values by number measurements_count
+      measurements.eTemp /= m_cnt;
+      measurements.humi /= m_cnt;
+      measurements.iTemp /= m_cnt;
+      measurements.lux /= m_cnt;
+      measurements.pres /= m_cnt;
+      measurements.time = avg_time/m_cnt;
+
+      /**
+       * Store new line in CURR_AVGLG_FNAME
+       */
+      f = fopen(CURR_AVGLG_FNAME, "a+");
+      if (f == NULL) {  //if can not open file
+        fclose(f);
+        ESP_LOGE(TAG, "Failed to open log file!");
+        ensure_card_works();
+      }else{
+        //Prepare and store log entry
+        fprintf(f, "%lld,%3.2F,%3.2F,%d,%5.2F,%4.2f\n",
+                      static_cast<long long>(measurements.time),
+                      measurements.iTemp,
+                      measurements.eTemp,
+                      static_cast<int>(measurements.humi),
+                      measurements.lux,
+                      measurements.pres);
+        fclose(f);
+        // reset helper variables
+        m_cnt = 0; avg_time = 0;
+        measurements.eTemp = 0;
+        measurements.humi = 0;
+        measurements.iTemp = 0;
+        measurements.lux = 0;
+        measurements.pres = 0;
+        measurements.time = 0;
+      }
+    }
     // Wait for the next cycle exactly 1 second- it is critical to .
     xTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(LOGGING_INTERVAL_MS) );
   }
 }
+
 
 /**
  * Check if CURR_LOG_FNAME exists, begin file if not
@@ -147,27 +186,28 @@ void vSDJSLGTask(void*){
  *    - begin new log file
  *  - otherwise continue with that file
  */
-void replace_or_continue_current_jslg_file(){
+void replace_or_continue_current_avglg_file(){
   time_t now =0, file_time_t =0;
   struct tm timeinfo, file_tm;
   struct stat fileStat;
 
-  if(stat(CURR_JSLG_FNAME, &fileStat) == ESP_OK){   //if file exists
+  if(stat(CURR_AVGLG_FNAME, &fileStat) == ESP_OK){   //if file exists
     file_time_t = fileStat.st_mtime;      //get last modification time of the file
     now= time(NULL);                      //get now time
     localtime_r(&now, &timeinfo);         //modify both to localtime
     localtime_r(&file_time_t, &file_tm);
-    ESP_LOGI(TAG, "CURRENT.JSO file last modification date: %4d-%2d-%2d", (file_tm.tm_year+1900), file_tm.tm_mon+1, file_tm.tm_mday);
+    ESP_LOGI(TAG, "CURRENT.CSV file last modification date: %4d-%2d-%2d", (file_tm.tm_year+1900), file_tm.tm_mon+1, file_tm.tm_mday);
     //if file mod yday older than now yday or file mod year older than now year
     if((file_tm.tm_year < timeinfo.tm_year) || (file_tm.tm_yday < timeinfo.tm_yday)){
-      end_jslg_file(CURR_JSLG_FNAME);   //end that file
-      rename_jslg_file(&file_tm);       //rename it with date of last modification.
-      begin_jslg_file(CURR_JSLG_FNAME); //and begin new log file
+      end_csvlg_file(CURR_AVGLG_FNAME);   //end that file
+      rename_avglg_file(&file_tm);       //rename it with date of last modification.
+      begin_csvlg_file(CURR_AVGLG_FNAME); //and begin new log file
     }
     return;
   }else{  //if file don't exist
-    begin_jslg_file(CURR_JSLG_FNAME);
-    return;
+    if(begin_csvlg_file(CURR_AVGLG_FNAME)){
+      ESP_LOGE(TAG, "Can't create file: %s", CURR_AVGLG_FNAME);
+    }
   }
 }
 
@@ -176,12 +216,12 @@ void replace_or_continue_current_jslg_file(){
  * @param time Pointer to tm struct with time that will be stored in filename
  *
  */
-void rename_jslg_file(tm * time){
-  char arch_log_filename[35];
+void rename_avglg_file(tm * time){
+  char arch_log_filename[39];
   uint8_t status = 0;
-  sprintf(arch_log_filename, "%s/%02d%02d%02d.JSO", SD_MOUNT_POINT LOG_FILE_DIR, time->tm_mday, time->tm_mon+1, static_cast<uint8_t>(time->tm_year-100)  );
-  ESP_LOGI(TAG, "Renaming file %s to %s", CURR_JSLG_FNAME, arch_log_filename);
-  status = rename(CURR_JSLG_FNAME, arch_log_filename);
+  sprintf(arch_log_filename, "%s/%02d%02d%02d.CSV", SD_MOUNT_POINT AVG_LOG_FILE_DIR, time->tm_mday, time->tm_mon+1, static_cast<uint8_t>(time->tm_year-100)  );
+  ESP_LOGI(TAG, "Renaming file %s to %s", CURR_AVGLG_FNAME, arch_log_filename);
+  status = rename(CURR_AVGLG_FNAME, arch_log_filename);
   if (status != 0) {
     /*
      * TODO: Resolve problem with renaming
@@ -190,41 +230,6 @@ void rename_jslg_file(tm * time){
      */
     ESP_LOGE(TAG, "Log file rename failed with error: %d", status);
 
-  }
-}
-
-/**
- * Creates or recreates new json log file starting with '[' sign
- * @param filename  Name of file
- * @return ESP_OK when successful, ESP_FAIL otherwise
- *
- */
-uint8_t begin_jslg_file(const char * filename){
-  FILE *f = fopen(filename, "w");
-  if(f != NULL){
-    fprintf(f, "[");
-    fclose(f);
-    return ESP_OK;
-  }else{
-    return ESP_FAIL;
-  }
-}
-
-/**
- * Ends existing json log file with ']' sign
- * @param filename  Name of file to be ended
- * @return ESP_OK when successful, ESP_FAIL otherwise
- *
- */
-uint8_t end_jslg_file(const char * filename){
-  FILE *f = fopen(filename, "r+b");
-  if(f != NULL){
-    fseek(f , -2 , SEEK_END );   //set position at the last but one byte of file (this will be a comma sign before \n)
-    fputs( "]" , f);             //rewrite it to the end of json format
-    fclose(f);
-    return ESP_OK;
-  }else{
-    return ESP_FAIL;
   }
 }
 

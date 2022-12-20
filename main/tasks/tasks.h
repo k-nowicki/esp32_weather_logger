@@ -20,6 +20,7 @@ void vDisplayTask(void*);
 void stats_task(void*);
 void vSDJSLGTask(void*);
 void vSDCSVLGTask(void*);
+void vSDAVGLGTask(void*);
 
 
 

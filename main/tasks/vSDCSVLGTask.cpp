@@ -54,8 +54,9 @@
 //App headers
 #include "tasks.h"
 
-void replace_or_continue_current_csvlg_file(void);
-void rename_csvlg_file(tm *);
+static void replace_or_continue_current_csvlg_file(void);
+static void rename_csvlg_file(tm *);
+static bool is_date_changed();
 uint8_t begin_csvlg_file(const char *);
 uint8_t end_csvlg_file(const char *);
 
@@ -217,4 +218,26 @@ uint8_t begin_csvlg_file(const char * filename){
  */
 uint8_t end_csvlg_file(const char * filename){
   return ESP_OK;  //there is nothing to add in case of csv file.
+}
+
+/**
+ * Check if date is different than in previous call
+ * @return true if date has changed, false otherwise.
+ */
+static bool is_date_changed(){
+  time_t now;
+  struct tm timeinfo;
+  static int yday = -1;
+
+  time(&now);  localtime_r(&now, &timeinfo);
+  //at first call initialize yday as today
+  if(yday == -1)
+    yday = timeinfo.tm_yday;
+  //check if date has changed
+  if(yday != timeinfo.tm_yday){
+    yday = timeinfo.tm_yday;
+    return true;
+  }
+  else
+    return false;
 }
