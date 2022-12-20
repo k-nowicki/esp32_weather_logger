@@ -4,6 +4,7 @@ var chart1;
 var chart2;
 var chart3;
 var chart4;
+const a_day = 1000*60*60*24;
 
 if(window.location.pathname.includes("/home") || window.location.pathname.includes("C:")){
   var myIPaddress = "https://192.168.0.25/";
@@ -12,7 +13,28 @@ else{
   var myIPaddress = "/";
 }
 CanvasJS.addCultureInfo("pl", {});
-  
+
+
+$('#datepicker').datepicker({
+    uiLibrary: 'bootstrap4',
+    footer: true,
+    format: 'dd-mm-yy',
+    modal: true,
+    change: function (e) {
+		fetch_logs_date_callback();
+	}
+});
+
+
+function fetch_logs_date_callback(){
+	var date, filename;
+	date = $('#datepicker').val();
+	filename= date.split('-').join('')+'.CSV';
+	FetchCSVLog(filename);
+	addLoader();
+	closeError();
+}
+
 function instantiateCharts(){
   chart1 = new CanvasJS.Chart("chartContainer1", {
     theme: "light1", //, "light1", "light2", "dark1", "dark2"
@@ -213,20 +235,30 @@ function instantiateCharts(){
   
 }
   
-const a_day = 1000*60*60*24;
 
+//index is no of days back (ex: 1 will produce yesterday's date)
+function resolve_date_by_idx(log_index){
+	date = new Date((new Date()).valueOf() - a_day * log_index);
+	dd = date.getDate().toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
+	mm = (date.getMonth() +1).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
+	yy = date.getYear() - 100;
+	return (''+dd + mm + yy);
+}
+
+//returns log filename based on index (no of days back) and extension
 function resolve_log_name_by(log_index, extension){
 	var log_name;
 	if(log_index > 0){
-		date = new Date((new Date()).valueOf() - a_day * log_index);
-		dd = date.getDate().toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
-		mm = (date.getMonth() +1).toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
-		yy = date.getYear() - 100;
-		log_name = ''+dd + mm + yy + '.' + extension
+		log_name = resolve_date_by_idx(log_index) + '.' + extension
 	}else{
 		log_name = 'CURRENT.' + extension
 	}
 	return log_name;
+}
+
+//base on high precision checkbox
+function resolve_path(){
+	return $('#precise_logs').is(":checked") ? "logs/" : "logs/avg/";
 }
 
 //Fething CSV Log by index
@@ -266,7 +298,7 @@ var config = {
 
 //fetch log from weather station
 function FetchCSVLog(log_fname){
-  var xmlhttp;
+  var xmlhttp, path;
   if (window.XMLHttpRequest){ xmlhttp = new XMLHttpRequest();  }
   else { xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); }
   xmlhttp.onreadystatechange = function() {
@@ -287,7 +319,8 @@ function FetchCSVLog(log_fname){
       displayError("Can not find that log file. Choose another one.");
     }
   }
-  xmlhttp.open("GET", myIPaddress + "logs/avg/" + log_fname, true);
+  path = resolve_path();
+  xmlhttp.open("GET", myIPaddress + path + log_fname, true);
   xmlhttp.send();
 }
 
