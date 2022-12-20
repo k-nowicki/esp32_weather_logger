@@ -89,6 +89,7 @@ SemaphoreHandle_t card_mutex;
 
 //task handlers
 TaskHandle_t vSDCSVLGTaskHandle = NULL;
+TaskHandle_t vSDAVGLGTaskHandle = NULL;
 TaskHandle_t vSDJSLGTaskHandle = NULL;
 
 /*******************************************************************************
@@ -177,6 +178,7 @@ void app_main(void){
   //Loggers
   xTaskCreatePinnedToCore( vSDCSVLGTask, "SDCSVLG", 6*1024, NULL, SDCSVLG_TASK_PRIO, &vSDCSVLGTaskHandle, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSDJSLGTask, "SDJSLG", 6*1024, NULL, SDJSLG_TASK_PRIO, &vSDJSLGTaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vSDAVGLGTask, "SDAVGLG", 6*1024, NULL, SDAVGLG_TASK_PRIO, &vSDAVGLGTaskHandle, tskNO_AFFINITY );
   //Create and start stats task
   xTaskCreatePinnedToCore(stats_task, "STATS", 2048, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);
 }

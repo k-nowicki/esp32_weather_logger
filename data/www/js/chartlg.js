@@ -11,7 +11,7 @@ if(window.location.pathname.includes("/home") || window.location.pathname.includ
 else{
   var myIPaddress = "/";
 }
-
+CanvasJS.addCultureInfo("pl", {});
   
 function instantiateCharts(){
   chart1 = new CanvasJS.Chart("chartContainer1", {
@@ -287,7 +287,7 @@ function FetchCSVLog(log_fname){
       displayError("Can not find that log file. Choose another one.");
     }
   }
-  xmlhttp.open("GET", myIPaddress + "logs/" + log_fname, true);
+  xmlhttp.open("GET", myIPaddress + "logs/avg/" + log_fname, true);
   xmlhttp.send();
 }
 

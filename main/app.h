@@ -41,6 +41,7 @@ struct measurement{
   float pres = 0.0;	//atm. pressure (BPM280)
   float alti = 0.0;	//altitude (BMP280, calculated)
   int dht_status = 0; //dht last_measurement status
+  time_t time = 0;  //time of measurement
 };
 
 //Business logic global variables
@@ -63,6 +64,7 @@ extern SemaphoreHandle_t card_mutex;
 
 //Tasks handlers
 extern TaskHandle_t vSDCSVLGTaskHandle;
+extern TaskHandle_t vSDAVGLGTaskHandle;
 extern TaskHandle_t vSDJSLGTaskHandle;
 
 //setup helper functions
@@ -81,7 +83,6 @@ void unmount_sd(void);
 uint8_t init_sd(void);
 uint8_t reinit_sd(void);
 void ensure_card_works(void);
-bool is_date_changed();
 
 /*******************************************************************************
  * App Definitions
@@ -91,6 +92,7 @@ bool is_date_changed();
  */
 #define LOGGER_RTC_WAIT_FOR_NOTIFY_MS (LOGGING_INTERVAL_MS-20)
 #define CSV_LOGGER_NOTIFY_ARRAY_INDEX 0
+#define AVG_LOGGER_NOTIFY_ARRAY_INDEX 0
 #define JS_LOGGER_NOTIFY_ARRAY_INDEX 0
 #define LOGGER_NOTIFY_VALUE 1
 

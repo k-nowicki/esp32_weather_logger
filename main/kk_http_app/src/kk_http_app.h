@@ -102,6 +102,7 @@ esp_err_t send_current_ms(httpd_req_t *req);
  */
 esp_err_t reset_send_confirmation(httpd_req_t *req);
 
+
 /**
  *  Set HTTP response content type according to file extension
  * @param req Request data

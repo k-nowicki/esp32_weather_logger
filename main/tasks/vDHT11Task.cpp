@@ -67,7 +67,8 @@ void vDHT11Task(void*){
     dht_read = DHT11_read();
     //update status of last read
     tmp_measurements.dht_status = dht_read.status;
-    if(dht_read.status==DHT11_OK){
+    //store DHT11 values only if status OK and temperature or humidity != 0
+    if(dht_read.status==DHT11_OK && (dht_read.temperature != 0 || dht_read.humidity != 0)){
       //update measurements only when reads OK
       tmp_measurements.eTemp = dht_read.temperature;
       tmp_measurements.humi = dht_read.humidity;

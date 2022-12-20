@@ -82,6 +82,7 @@ void store_measurements(measurement measures){
   curr_measures.iTemp = measures.iTemp;
   curr_measures.pres = measures.pres;
   curr_measures.alti = measures.alti;
+  curr_measures.time = time(NULL);
   xSemaphoreGive(current_measuers_mutex);
 }
 
@@ -244,24 +245,3 @@ void ensure_card_works(void){
  *
  */
 
-/**
- * Check if date is different than in previous call
- * @return true if date has changed, false otherwise.
- */
-bool is_date_changed(){
-  time_t now;
-  struct tm timeinfo;
-  static int yday = -1;
-
-  time(&now);  localtime_r(&now, &timeinfo);
-  //at first call initialize yday as today
-  if(yday == -1)
-    yday = timeinfo.tm_yday;
-  //check if date has changed
-  if(yday != timeinfo.tm_yday){
-    yday = timeinfo.tm_yday;
-    return true;
-  }
-  else
-    return false;
-}

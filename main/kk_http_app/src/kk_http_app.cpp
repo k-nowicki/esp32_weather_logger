@@ -42,8 +42,8 @@ static const char* TAG = "HTTP";
  *
  */
 esp_err_t file_get_handler(httpd_req_t *req){
-  char filepath[FILE_PATH_MAX];
   FILE *fd = NULL;
+  char filepath[FILE_PATH_MAX];
   struct stat file_stat;
 
   const char *filename = get_path_from_uri(filepath, ((struct file_server_data *)req->user_ctx)->base_path,
@@ -112,6 +112,9 @@ esp_err_t file_get_handler(httpd_req_t *req){
   return ESP_OK;
 }
 
+
+
+
 /**
  * \brief Handler to execute HTTP GET /set/ requests
  *
@@ -158,6 +161,8 @@ esp_err_t data_get_handler(httpd_req_t *req){
     return send_current_measurements(req);
   }else if(strncmp(req->uri + strlen((char*)req->user_ctx), "current_ms.json", 25) == 0){
     return send_current_ms(req);
+//  }else if(strncmp(req->uri + strlen((char*)req->user_ctx), "history", 7) == 0){
+//    return send_history(req);
   }else{
     ESP_LOGE(TAG, "Failed to recognize path: %s", req->uri);
     /* Respond with 404 Not Found */
@@ -230,6 +235,7 @@ esp_err_t send_current_ms(httpd_req_t *req){
   return ESP_OK;
 }
 
+
 /**
  * Sends confirmation and execute software reset
  *
@@ -281,6 +287,8 @@ esp_err_t set_content_type_from_file(httpd_req_t *req, const char *filename){
     return httpd_resp_set_type(req, "video/mpeg");
   }else if (IS_FILE_EXT(filename, ".json")){
     return httpd_resp_set_type(req, "text/json");
+  }else if (IS_FILE_EXT(filename, ".csv")){
+    return httpd_resp_set_type(req, "application/CSV");
   }// This is a limited set only. For any other type always set as plain text
   return httpd_resp_set_type(req, "text/plain");
 }
