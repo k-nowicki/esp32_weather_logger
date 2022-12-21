@@ -60,10 +60,10 @@ void vSensorsTask(void*){
   measurement tmp_measurements;
   while (1) {
     // Read all fast sensors
-    tmp_measurements.lux = lightMeter.readLightLevel();
-    tmp_measurements.iTemp = pressureMeter.readTemperature();
-    tmp_measurements.pres = pressureMeter.readPressure()/100;
-    tmp_measurements.alti = pressureMeter.readAltitude(1013.25);
+    tmp_measurements.lux = g_lightMeter.readLightLevel();
+    tmp_measurements.iTemp = g_pressureMeter.readTemperature();
+    tmp_measurements.pres = g_pressureMeter.readPressure()/100;
+    tmp_measurements.alti = g_pressureMeter.readAltitude(1013.25);
     store_measurements(tmp_measurements);   //Store in global curr_measures
 
     vTaskDelay(pdMS_TO_TICKS(100));

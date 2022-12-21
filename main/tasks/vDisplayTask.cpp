@@ -62,38 +62,38 @@ void vDisplayTask(void *arg){
   struct tm timeinfo;
   tcpip_adapter_ip_info_t ip;
 
-  display.display();
+  g_display.display();
   vTaskDelay(pdMS_TO_TICKS(200));
-  display.clearDisplay();
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE); // Draw white text
-  display.setCursor(0, 10);     // Start at top-left corner
-  display.cp437(true);         // Use full 256 char 'Code Page 437' font
-  display.setFont(&FreeSans9pt7b);
+  g_display.clearDisplay();
+  g_display.setTextSize(1);      // Normal 1:1 pixel scale
+  g_display.setTextColor(SSD1306_WHITE); // Draw white text
+  g_display.setCursor(0, 10);     // Start at top-left corner
+  g_display.cp437(true);         // Use full 256 char 'Code Page 437' font
+  g_display.setFont(&FreeSans9pt7b);
 
-  display.println("Weather Station V 1.0");
-  display.setFont();
-  display.println("by KNowicki @ 2022");
-  display.display();
+  g_display.println("Weather Station V 1.0");
+  g_display.setFont();
+  g_display.println("by KNowicki @ 2022");
+  g_display.display();
   vTaskDelay(pdMS_TO_TICKS(1000));
   while(1){
     vTaskDelay(pdMS_TO_TICKS(100));
-    display.clearDisplay();
-    display.setCursor(0, 0);     // Start at top-left corner
+    g_display.clearDisplay();
+    g_display.setCursor(0, 0);     // Start at top-left corner
     tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip); //get IP address.
     tmp_measurements = get_latest_measurements();         //safely read current values
     time(&now);                                           //get time
     localtime_r(&now, &timeinfo);
-    display.printf("%0d-%02d-%04d  %02d:%02d:%02d\n", timeinfo.tm_mday, timeinfo.tm_mon+1,
+    g_display.printf("%0d-%02d-%04d  %02d:%02d:%02d\n", timeinfo.tm_mday, timeinfo.tm_mon+1,
                    timeinfo.tm_year+1900, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
-    display.printf("Intern T: %3.2F %cC\n", tmp_measurements.iTemp,'\xF8');
-    display.printf("Extern T: %3.2F %cC\n", tmp_measurements.eTemp,'\xF8');
-    display.printf("Humidity: %d%%\n", (int)tmp_measurements.humi);
-    display.printf("Sun expo: %5.2F Lux\n", tmp_measurements.lux);
-    display.printf("Pressure: %4.2f hPa\n", tmp_measurements.pres);
-    display.printf("Altitude: %5.2Fm\n", tmp_measurements.alti);
-    display.printf("IP: " IPSTR, IP2STR(&ip.ip));
-    display.display();
+    g_display.printf("Intern T: %3.2F %cC\n", tmp_measurements.iTemp,'\xF8');
+    g_display.printf("Extern T: %3.2F %cC\n", tmp_measurements.eTemp,'\xF8');
+    g_display.printf("Humidity: %d%%\n", (int)tmp_measurements.humi);
+    g_display.printf("Sun expo: %5.2F Lux\n", tmp_measurements.lux);
+    g_display.printf("Pressure: %4.2f hPa\n", tmp_measurements.pres);
+    g_display.printf("Altitude: %5.2Fm\n", tmp_measurements.alti);
+    g_display.printf("IP: " IPSTR, IP2STR(&ip.ip));
+    g_display.display();
   }
 }
 
@@ -103,17 +103,17 @@ void vDisplayTask(void *arg){
  *
  */
 void init_app_screen(void){
-  display.display();
+  g_display.display();
   vTaskDelay(pdMS_TO_TICKS(200));
-  display.clearDisplay();
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE); // Draw white text
-  display.setCursor(0, 10);     // Start at top-left corner
-  display.cp437(true);         // Use full 256 char 'Code Page 437' font
-  display.setFont(&FreeSans9pt7b);
+  g_display.clearDisplay();
+  g_display.setTextSize(1);      // Normal 1:1 pixel scale
+  g_display.setTextColor(SSD1306_WHITE); // Draw white text
+  g_display.setCursor(0, 10);     // Start at top-left corner
+  g_display.cp437(true);         // Use full 256 char 'Code Page 437' font
+  g_display.setFont(&FreeSans9pt7b);
 
-  display.println("Weather Station V 1.0");
-  display.setFont();
-  display.println("by KNowicki @ 2022");
-  display.display();
+  g_display.println("Weather Station V 1.0");
+  g_display.setFont();
+  g_display.println("by KNowicki @ 2022");
+  g_display.display();
 }

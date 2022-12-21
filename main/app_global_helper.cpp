@@ -67,9 +67,9 @@
  */
 measurement get_latest_measurements(void){
   measurement last_measures;
-  xSemaphoreTake(current_measuers_mutex, portMAX_DELAY);
-  last_measures = curr_measures;  //safely read current values
-  xSemaphoreGive(current_measuers_mutex);
+  xSemaphoreTake(g_current_measuers_mutex, portMAX_DELAY);
+  last_measures = g_curr_measures;  //safely read current values
+  xSemaphoreGive(g_current_measuers_mutex);
   return last_measures;
 }
 /**
@@ -77,13 +77,13 @@ measurement get_latest_measurements(void){
  * @param measures Measurements to store
  */
 void store_measurements(measurement measures){
-  xSemaphoreTake(current_measuers_mutex, portMAX_DELAY);
-  curr_measures.lux = measures.lux;
-  curr_measures.iTemp = measures.iTemp;
-  curr_measures.pres = measures.pres;
-  curr_measures.alti = measures.alti;
-  curr_measures.time = time(NULL);
-  xSemaphoreGive(current_measuers_mutex);
+  xSemaphoreTake(g_current_measuers_mutex, portMAX_DELAY);
+  g_curr_measures.lux = measures.lux;
+  g_curr_measures.iTemp = measures.iTemp;
+  g_curr_measures.pres = measures.pres;
+  g_curr_measures.alti = measures.alti;
+  g_curr_measures.time = time(NULL);
+  xSemaphoreGive(g_current_measuers_mutex);
 }
 
 
@@ -135,7 +135,7 @@ void search_i2c(void){
 void unmount_sd(){
   // All done, unmount partition and disable SDMMC peripheral
   const char mount_point[] = SD_MOUNT_POINT;
-  esp_vfs_fat_sdcard_unmount(mount_point, card);
+  esp_vfs_fat_sdcard_unmount(mount_point, g_card);
   ESP_LOGI("", "Card unmounted");
 }
 
@@ -190,7 +190,7 @@ uint8_t init_sd(){
   slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
 
   ESP_LOGI(TAG, "Mounting filesystem");
-  ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card);
+  ret = esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &g_card);
 
   if (ret != ESP_OK) {
     if (ret == ESP_FAIL) {
@@ -205,7 +205,7 @@ uint8_t init_sd(){
   ESP_LOGI(TAG, "Filesystem mounted");
 
   // Card has been initialized, print its properties
-  sdmmc_card_print_info(stdout, card);
+  sdmmc_card_print_info(stdout, g_card);
   return ESP_OK;
 }
 
@@ -217,10 +217,10 @@ uint8_t reinit_sd(void){
   const char *TAG = "";
   uint8_t err;
   ESP_LOGW(TAG, "Trying to reinitialize SD Card...");
-  xSemaphoreTake(card_mutex, portMAX_DELAY);
+  xSemaphoreTake(g_card_mutex, portMAX_DELAY);
   unmount_sd();
   err = init_sd();
-  xSemaphoreGive(card_mutex);
+  xSemaphoreGive(g_card_mutex);
   if(err != ESP_OK){
     ESP_LOGE(TAG, "Cannot initialize SD Card!");
   }else{
@@ -233,9 +233,9 @@ uint8_t reinit_sd(void){
  * thread-safely checks sd card status, if something is wrong, tries to reinitialize it
  */
 void ensure_card_works(void){
-  xSemaphoreTake(card_mutex, portMAX_DELAY);
-  uint8_t status = sdmmc_get_status(card);
-  xSemaphoreGive(card_mutex);
+  xSemaphoreTake(g_card_mutex, portMAX_DELAY);
+  uint8_t status = sdmmc_get_status(g_card);
+  xSemaphoreGive(g_card_mutex);
   if(status != ESP_OK)
     reinit_sd();
 }

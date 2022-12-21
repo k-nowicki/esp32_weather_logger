@@ -9,7 +9,7 @@
  *  This file adopts esp-idf https server to be used with weather station.
  *  contains app layer functions for:
  *   - HTTP(s) server initalization
- *   - configuring handles for server callbacks
+ *   - configuring handlers for server callbacks
  *
  */
 

@@ -15,6 +15,9 @@ else{
 CanvasJS.addCultureInfo("pl", {});
 
 
+document.cookie = 'SameSite=None; ; path=/; Secure'
+ 
+
 $('#datepicker').datepicker({
     uiLibrary: 'bootstrap4',
     footer: true,
