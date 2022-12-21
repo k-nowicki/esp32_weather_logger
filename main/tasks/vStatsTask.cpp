@@ -59,14 +59,14 @@ static esp_err_t print_real_time_stats(TickType_t);
  *
  * @param arg
  */
-void stats_task(void *arg){
+void vStatsTask(void *arg){
   measurement tmp_measurements;
   int stats_error;
   //Print real time stats and measurements periodically
   while (1) {
     stats_error = print_real_time_stats(STATS_TICKS); //this takes STATS_TICKS ms when it is counting
     tmp_measurements = get_latest_measurements();
-    xSemaphoreTake(uart_mutex, portMAX_DELAY);      //take UART port
+    xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
     if (stats_error == ESP_OK) {
       printf("Real time stats obtained\n");
     } else {
@@ -82,7 +82,7 @@ void stats_task(void *arg){
     printf("BMP Atm. pressure: %4.2f hPa\n", tmp_measurements.pres);
     printf("BMP Altitude:      %5.2F m\n", tmp_measurements.alti);
     printf("=========================================\n\n");
-    xSemaphoreGive(uart_mutex);     //give back UART port
+    xSemaphoreGive(g_uart_mutex);     //give back UART port
   }
 }
 
@@ -159,7 +159,7 @@ static esp_err_t print_real_time_stats(TickType_t xTicksToWait){
     goto exit;
   }
   //lock the UART to not interrupt printing
-  xSemaphoreTake(uart_mutex, portMAX_DELAY);
+  xSemaphoreTake(g_uart_mutex, portMAX_DELAY);
   printf("Real time stats over %d ticks\n", xTicksToWait);
   printf("-----------------------------------------\n");
   printf("| Task | Run Time | Percentage\n");
@@ -194,7 +194,7 @@ static esp_err_t print_real_time_stats(TickType_t xTicksToWait){
       printf("| %s | Created\n", end_array[i].pcTaskName);
     }
   }
-  xSemaphoreGive(uart_mutex);
+  xSemaphoreGive(g_uart_mutex);
   ret = ESP_OK;
 
 exit:    //Common return path

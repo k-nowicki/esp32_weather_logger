@@ -9,10 +9,9 @@
  *  Web App Handles for ESP32 Weather Logger
  *
  *  Functions responsible for
- *   - File serving from SD card (for html, css, js, img, ico etc)
- *   - Responding to asynchronous requests with dynamic data
+ *   - File serving from SD card
+ *   - Responding to Web API calls
  *   - Redirecting / to /index.htm
- *   -
  *
  */
 

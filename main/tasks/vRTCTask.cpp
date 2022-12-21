@@ -85,7 +85,7 @@ void vRTCTask(void*){
   update_int_rtc_from_ext_rtc();
 
   //Get external RTC time
-  rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday);
+  g_rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday);
 
   //Initialize sNTP synchronization events
   initialize_sntp();
@@ -97,20 +97,20 @@ void vRTCTask(void*){
   }
   vTaskDelay(2000 / portTICK_PERIOD_MS);
   //send notify to csv logger task that time is synchronized
-  if(vSDCSVLGTaskHandle != NULL){
-      xTaskNotifyIndexed( vSDCSVLGTaskHandle, CSV_LOGGER_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
+  if(g_vSDCSVLGTaskHandle != NULL){
+      xTaskNotifyIndexed( g_vSDCSVLGTaskHandle, CSV_LOGGER_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
   }else{
       ESP_LOGE(TAG, "vSDCSVLGTaskHandle is NULL pointer! WTF!");
   }
   //send notify to js logger task that time is synchronized
-  if(vSDJSLGTaskHandle != NULL){
-      xTaskNotifyIndexed( vSDJSLGTaskHandle, JS_LOGGER_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
+  if(g_vSDJSLGTaskHandle != NULL){
+      xTaskNotifyIndexed( g_vSDJSLGTaskHandle, JS_LOGGER_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
   }else{
       ESP_LOGE(TAG, "vSDJSLGTaskHandle is NULL pointer! WTF!");
   }
   //send notify to avg logger task that time is synchronized
-  if(vSDAVGLGTaskHandle != NULL){
-      xTaskNotifyIndexed( vSDAVGLGTaskHandle, AVG_LOGGER_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
+  if(g_vSDAVGLGTaskHandle != NULL){
+      xTaskNotifyIndexed( g_vSDAVGLGTaskHandle, AVG_LOGGER_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
   }else{
       ESP_LOGE(TAG, "vSDAVGLGTaskHandle is NULL pointer! WTF!");
   }
@@ -135,7 +135,7 @@ void vRTCTask(void*){
     }
 
     //Print out Time
-    if (!rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday)) {
+    if (!g_rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday)) {
       ESP_LOGE(TAG, "Get ext RTC time failed");
     }else {
       ESP_LOGI(TAG, "External RTC time: %d-%02d-%04d  %02d:%02d:%02d", mday, mon, year, hour, min, sec);
@@ -159,9 +159,9 @@ void time_sync_notification_cb(struct timeval *tv){
   time_t now;
   struct tm timeinfo;
   //update RTC
-  time(&now);
+  now = time(NULL);
   localtime_r(&now, &timeinfo);
-  if(rtc.write(&timeinfo)){
+  if(g_rtc.write(&timeinfo)){
     ESP_LOGI(TAG, "Local and external RTC updated.");
   }else{
     ESP_LOGE(TAG, "Local RTC sync done, external RTC reported error!");
@@ -174,7 +174,7 @@ uint8_t update_ext_rtc_from_int_rtc(void){
   //update RTC
   time(&now);
   localtime_r(&now, &timeinfo);
-  if(rtc.write(&timeinfo))
+  if(g_rtc.write(&timeinfo))
     return ESP_OK;
   else
     return ESP_FAIL;
@@ -182,7 +182,7 @@ uint8_t update_ext_rtc_from_int_rtc(void){
 
 void update_int_rtc_from_ext_rtc(void){
   timeval tv_now = {0,0};
-  tv_now.tv_sec = rtc.getEpoch();
+  tv_now.tv_sec = g_rtc.getEpoch();
   settimeofday(&tv_now, NULL);
 }
 

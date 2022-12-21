@@ -53,10 +53,6 @@
 #include "setup.h"
 #include "tasks/tasks.h"
 #include "app.h"
-//#ifdef B1000000   //arduino libs loaded in app.h defines those marcos in different way than esp-idf does
-//#undef B1000000
-//#undef B110
-//#endif
 #include "kk_http_app/src/kk_http_app.h"
 #include "kk_http_app/src/kk_http_server_setup.h"
 
@@ -71,26 +67,26 @@ extern "C" {
  */
 
 //Business logic global variables
-measurement curr_measures; // Current measurements
-ErriezDS3231 rtc;          // RTC object
+measurement g_curr_measures; // Current measurements
+ErriezDS3231 g_rtc;          // RTC object
 
 //Sensor global objects
-BH1750 lightMeter(BH1750_ADDR);
-Adafruit_BMP280 pressureMeter(&Wire); // I2C
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+BH1750 g_lightMeter(BH1750_ADDR);
+Adafruit_BMP280 g_pressureMeter(&Wire); // I2C
+Adafruit_SSD1306 g_display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 //SD Card global object
-sdmmc_card_t * card;
+sdmmc_card_t * g_card;
 
 //semaphores
-SemaphoreHandle_t current_measuers_mutex;
-SemaphoreHandle_t uart_mutex;
-SemaphoreHandle_t card_mutex;
+SemaphoreHandle_t g_current_measuers_mutex;
+SemaphoreHandle_t g_uart_mutex;
+SemaphoreHandle_t g_card_mutex;
 
 //task handlers
-TaskHandle_t vSDCSVLGTaskHandle = NULL;
-TaskHandle_t vSDAVGLGTaskHandle = NULL;
-TaskHandle_t vSDJSLGTaskHandle = NULL;
+TaskHandle_t g_vSDCSVLGTaskHandle = NULL;
+TaskHandle_t g_vSDAVGLGTaskHandle = NULL;
+TaskHandle_t g_vSDJSLGTaskHandle = NULL;
 
 /*******************************************************************************
  *  App Main
@@ -98,9 +94,9 @@ TaskHandle_t vSDJSLGTaskHandle = NULL;
 void app_main(void){
   const char* TAG = "app_setup";
   //create semaphores
-  current_measuers_mutex = xSemaphoreCreateMutex();
-  uart_mutex = xSemaphoreCreateMutex();
-  card_mutex = xSemaphoreCreateMutex();
+  g_current_measuers_mutex = xSemaphoreCreateMutex();
+  g_uart_mutex = xSemaphoreCreateMutex();
+  g_card_mutex = xSemaphoreCreateMutex();
 
 //  initArduino();
   //Allow other core to finish initialization
@@ -111,8 +107,8 @@ void app_main(void){
   Wire.setClock(400000);
 
   //Setup OLED display
-  if(!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
-    display.display();
+  if(!g_display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+    g_display.display();
     ESP_LOGE(TAG, "SSD1306 allocation failed");
     for(;;); // Don't proceed, loop forever
   }else{
@@ -132,20 +128,20 @@ void app_main(void){
 
 
   //BH1750 Initialization
-  if(!lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire)){
+  if(!g_lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire)){
     ESP_LOGE(TAG, "BH1750 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "BH1750 Light meter initialized.");
   }
   //BMP280 Initialization
-  if(!pressureMeter.begin(BMP280_ADDR)){
+  if(!g_pressureMeter.begin(BMP280_ADDR)){
     ESP_LOGE(TAG, "BMP280 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "BMP280 Pressure meter initialized.");
   }
-  if(!rtc.begin(&Wire)){
+  if(!g_rtc.begin(&Wire)){
     ESP_LOGE(TAG, "RTC DS3231 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{
@@ -176,11 +172,11 @@ void app_main(void){
   xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
   //Loggers
-  xTaskCreatePinnedToCore( vSDCSVLGTask, "SDCSVLG", 6*1024, NULL, SDCSVLG_TASK_PRIO, &vSDCSVLGTaskHandle, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vSDJSLGTask, "SDJSLG", 6*1024, NULL, SDJSLG_TASK_PRIO, &vSDJSLGTaskHandle, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vSDAVGLGTask, "SDAVGLG", 6*1024, NULL, SDAVGLG_TASK_PRIO, &vSDAVGLGTaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vSDCSVLGTask, "SDCSVLG", 6*1024, NULL, SDCSVLG_TASK_PRIO, &g_vSDCSVLGTaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vSDJSLGTask, "SDJSLG", 6*1024, NULL, SDJSLG_TASK_PRIO, &g_vSDJSLGTaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vSDAVGLGTask, "SDAVGLG", 6*1024, NULL, SDAVGLG_TASK_PRIO, &g_vSDAVGLGTaskHandle, tskNO_AFFINITY );
   //Create and start stats task
-  xTaskCreatePinnedToCore(stats_task, "STATS", 2048, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);
+  xTaskCreatePinnedToCore(vStatsTask, "STATS", 2048, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);
 }
 
 

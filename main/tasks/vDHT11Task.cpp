@@ -74,11 +74,11 @@ void vDHT11Task(void*){
       tmp_measurements.humi = dht_read.humidity;
     }
     //store measurements in curr_measures
-    xSemaphoreTake(current_measuers_mutex, portMAX_DELAY);
-    curr_measures.eTemp = tmp_measurements.eTemp;
-    curr_measures.humi = tmp_measurements.humi;
-    curr_measures.dht_status = tmp_measurements.dht_status;
-    xSemaphoreGive(current_measuers_mutex);
+    xSemaphoreTake(g_current_measuers_mutex, portMAX_DELAY);
+    g_curr_measures.eTemp = tmp_measurements.eTemp;
+    g_curr_measures.humi = tmp_measurements.humi;
+    g_curr_measures.dht_status = tmp_measurements.dht_status;
+    xSemaphoreGive(g_current_measuers_mutex);
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }

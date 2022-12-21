@@ -17,7 +17,7 @@ void vSensorsTask(void*);
 void vDHT11Task(void*);
 void vRTCTask(void*);
 void vDisplayTask(void*);
-void stats_task(void*);
+void vStatsTask(void*);
 void vSDJSLGTask(void*);
 void vSDCSVLGTask(void*);
 void vSDAVGLGTask(void*);

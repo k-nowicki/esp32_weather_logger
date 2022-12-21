@@ -45,27 +45,27 @@ struct measurement{
 };
 
 //Business logic global variables
-extern measurement curr_measures;	//Current measurements
+extern measurement g_curr_measures;	//Current measurements
 // Create RTC object
-extern ErriezDS3231 rtc;
+extern ErriezDS3231 g_rtc;
 
 //Sensor global objects
-extern BH1750 lightMeter;
-extern Adafruit_BMP280 pressureMeter; // I2C
-extern Adafruit_SSD1306 display;
+extern BH1750 g_lightMeter;
+extern Adafruit_BMP280 g_pressureMeter; // I2C
+extern Adafruit_SSD1306 g_display;
 
 //SD Card global object
-extern sdmmc_card_t * card;
+extern sdmmc_card_t * g_card;
 
 //semaphores
-extern SemaphoreHandle_t current_measuers_mutex;
-extern SemaphoreHandle_t uart_mutex;
-extern SemaphoreHandle_t card_mutex;
+extern SemaphoreHandle_t g_current_measuers_mutex;
+extern SemaphoreHandle_t g_uart_mutex;
+extern SemaphoreHandle_t g_card_mutex;
 
 //Tasks handlers
-extern TaskHandle_t vSDCSVLGTaskHandle;
-extern TaskHandle_t vSDAVGLGTaskHandle;
-extern TaskHandle_t vSDJSLGTaskHandle;
+extern TaskHandle_t g_vSDCSVLGTaskHandle;
+extern TaskHandle_t g_vSDAVGLGTaskHandle;
+extern TaskHandle_t g_vSDJSLGTaskHandle;
 
 //setup helper functions
 //void initialize_ds18b20(void);
