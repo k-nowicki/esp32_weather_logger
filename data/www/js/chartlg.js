@@ -7,7 +7,7 @@ var chart4;
 const a_day = 1000*60*60*24;
 
 if(window.location.pathname.includes("/home") || window.location.pathname.includes("C:")){
-  var myIPaddress = "https://192.168.0.25/";
+  var myIPaddress = "https://192.168.0.15/";
 }
 else{
   var myIPaddress = "/";
@@ -367,10 +367,15 @@ function addDataPoints(dataSet) {
       chart1.options.data[0].dataPoints.push({x: timestamp,y: dataSet[i].int_t});
       chart1.options.data[1].dataPoints.push({x: timestamp,y: dataSet[i].ext_t});
       
-      chart2.options.data[0].dataPoints.push({x: timestamp,y: (dataSet[i].sun != 0 ? dataSet[i].sun : 0.1)});
+      if(dataSet[i].sun <= 0 ){ dataSet[i].sun = 0.1; }
+	  if(dataSet[i].sun > 60000){						//if value is grater than real values range
+		if(i > 0) dataSet[i].sun = dataSet[i-1].sun;	//set to previous row value
+		else dataSet[i].sun = 0.1;
+  	  }
+      chart2.options.data[0].dataPoints.push({x: timestamp,y: dataSet[i].sun});
       
       chart3.options.data[0].dataPoints.push({x: timestamp,y: (dataSet[i].humi < 100 ? dataSet[i].humi : 0)});
-      chart4.options.data[0].dataPoints.push({x: timestamp,y: dataSet[i].press});
+      chart4.options.data[0].dataPoints.push({x: timestamp,y: (dataSet[i].press >= 900 ? dataSet[i].press : 991)});
     }
   }
 }

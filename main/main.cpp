@@ -68,8 +68,12 @@ extern "C" {
 
 //Business logic global variables
 measurement g_curr_measures; // Current measurements
-ErriezDS3231 g_rtc;          // RTC object
 
+#ifdef DS3231           // RTC object depending on used physical device
+ErriezDS3231 g_rtc;
+#else
+ErriezDS1307 g_rtc;
+#endif
 //Sensor global objects
 BH1750 g_lightMeter(BH1750_ADDR);
 Adafruit_BMP280 g_pressureMeter(&Wire); // I2C

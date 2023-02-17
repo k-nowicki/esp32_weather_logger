@@ -1,0 +1,21 @@
+{
+    "project_name":       "bootloader",
+    "project_path":       "C:/Users/Karol/esp/esp-idf-v4.4.3/components/bootloader/subproject",
+    "build_dir":          "C:/Users/Karol/Documents/Embedded2022/EclipseWorkspace/kk_weather_station/build/bootloader",
+    "config_file":        "C:/Users/Karol/Documents/Embedded2022/EclipseWorkspace/kk_weather_station/sdkconfig",
+    "config_defaults":    "",
+    "app_elf":            "bootloader.elf",
+    "app_bin":            "bootloader.bin",
+    "git_revision":       "v4.4.3-dirty",
+    "target":             "esp32",
+    "rev":                "1",
+    "phy_data_partition": "",
+    "monitor_baud" :      "2000000",
+    "monitor_toolprefix": "xtensa-esp32-elf-",
+    "config_environment" : {
+        "COMPONENT_KCONFIGS" : "C:/Users/Karol/esp/esp-idf-v4.4.3/components/efuse/Kconfig;C:/Users/Karol/esp/esp-idf-v4.4.3/components/esp32/Kconfig;C:/Users/Karol/esp/esp-idf-v4.4.3/components/esp_common/Kconfig;C:/Users/Karol/esp/esp-idf-v4.4.3/components/esp_hw_support/Kconfig;C:/Users/Karol/esp/esp-idf-v4.4.3/components/esp_system/Kconfig;C:/Users/Karol/esp/esp-idf-v4.4.3/components/freertos/Kconfig;C:/Users/Karol/esp/esp-idf-v4.4.3/components/hal/Kconfig;C:/Users/Karol/esp/esp-idf-v4.4.3/components/log/Kconfig;C:/Users/Karol/esp/esp-idf-v4.4.3/components/newlib/Kconfig;C:/Users/Karol/esp/esp-idf-v4.4.3/components/spi_flash/Kconfig",
+        "COMPONENT_KCONFIGS_PROJBUILD" : "C:/Users/Karol/esp/esp-idf-v4.4.3/components/bootloader/Kconfig.projbuild;C:/Users/Karol/esp/esp-idf-v4.4.3/components/esp_rom/Kconfig.projbuild;C:/Users/Karol/esp/esp-idf-v4.4.3/components/esptool_py/Kconfig.projbuild;C:/Users/Karol/esp/esp-idf-v4.4.3/components/partition_table/Kconfig.projbuild"
+    },
+    "build_components" : [ "bootloader", "bootloader_support", "efuse", "esp32", "esp_common", "esp_hw_support", "esp_rom", "esp_system", "esptool_py", "freertos", "hal", "log", "main", "micro-ecc", "newlib", "partition_table", "soc", "spi_flash", "xtensa", "" ],
+    "build_component_paths" : [ "C:/Users/Karol/esp/esp-idf-v4.4.3/components/bootloader", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/bootloader_support", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/efuse", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/esp32", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/esp_common", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/esp_hw_support", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/esp_rom", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/esp_system", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/esptool_py", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/freertos", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/hal", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/log", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/bootloader/subproject/main", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/bootloader/subproject/components/micro-ecc", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/newlib", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/partition_table", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/soc", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/spi_flash", "C:/Users/Karol/esp/esp-idf-v4.4.3/components/xtensa", "" ]
+}

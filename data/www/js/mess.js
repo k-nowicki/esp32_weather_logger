@@ -1,7 +1,7 @@
 // Use ip address under development
 // Use "/" string when using from controller web site
 if(window.location.pathname.includes("/home") || window.location.pathname.includes("C:")){
-  var myIPaddress = "https://192.168.0.25/";
+  var myIPaddress = "https://192.168.0.15/";
 }
 else{
   var myIPaddress = "/";
