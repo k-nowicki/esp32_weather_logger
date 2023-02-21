@@ -25,6 +25,8 @@
 #include <Fonts/FreeSans9pt7b.h>
 #include <dht11.h>
 #include <BH1750.h>
+#include "esp_camera.h"
+
 
 //#define DS3231    //Uncomment if using DS3231 instead of DS1307
 

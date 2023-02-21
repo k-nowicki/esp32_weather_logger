@@ -14,7 +14,8 @@ Device can be used as weather conditions logger, time-lapse camera or just home 
 | Pressure/Temperature  |[BMP280](https://www.bosch-sensortec.com/products/environmental-sensors/pressure-sensors/bmp280/)| [Adafruit_BMP280_Library](https://github.com/adafruit/Adafruit_BMP280_Library); [Adafruit_Sensor](https://github.com/adafruit/Adafruit_Sensor); [Adafruit_BusIO](https://github.com/adafruit/Adafruit_BusIO); [arduino-esp32](https://github.com/espressif/arduino-esp32) |
 |Light   |[BH1750](https://www.handsontec.com/dataspecs/sensor/BH1750%20Light%20Sensor.pdf)   |  [claws/BH1750](https://github.com/claws/BH1750); [arduino-esp32](https://github.com/espressif/arduino-esp32)  |
 |OLED |[GME12864-41/ SSD1306](https://nettigo.pl/products/wyswietlacz-oled-0-96-i2c-128x64-ssd1306-bialy) \| [Reserve info](https://datasheethub.com/ssd1306-128x64-mono-0-96-inch-i2c-oled-display/) |[Adafruit_SSD1306](https://github.com/adafruit/Adafruit_SSD1306); [Adafruit-GFX-Library](https://github.com/adafruit/Adafruit-GFX-Library); [arduino-esp32](https://github.com/espressif/arduino-esp32) |
-RTC | [HW084 / DS3231](http://www.szhwmake.com/prod_view.aspx?TypeId=83&Id=350&FId=t3:83:3) \| [Reserve info](https://lastminuteengineers.com/ds3231-rtc-arduino-tutorial/) |[ErriezDS3231 (modified)](https://github.com/k-nowicki/ErriezDS3231) |
+RTC (Var 1)| [HW084 / DS3231](http://www.szhwmake.com/prod_view.aspx?TypeId=83&Id=350&FId=t3:83:3) \| [Reserve info](https://lastminuteengineers.com/ds3231-rtc-arduino-tutorial/) |[ErriezDS3231 (modified)](https://github.com/k-nowicki/ErriezDS3231)|
+RTC (Var 2)| [TinyRTC / DS1307](https://www.analog.com/media/en/technical-documentation/data-sheets/DS1307.pdf) \| [Reserve info](https://lastminuteengineers.com/ds1307-rtc-arduino-tutorial/) | [ErriezDS1307 (modified)](https://github.com/Erriez/ErriezDS1307)|
 
 
 ## Connections
@@ -32,15 +33,16 @@ Instructions on how to connect and flash esp32 can be found also on [espressiff 
 
 ## Project status: under development
  This project is still under development. Majority of features mentioned above are not implemented yet.
+ 
  What is implemented:
   - OLED Display displays current measurements, date and time
-  - Sensors: pressure, temperature from two sensors, humidity and light are implemented and measured
+  - Sensors: pressure, temperature from two sensors, humidity and light
   - External and internal RTCs with periodic NTP time sync
   - WiFi connectivity (with credentials configured by menuconfig for now)
   - SD card with file system (sadly requires physical hacking of the esp32-cam board *)
   - Logging of measurements in json formatted logs 
   - Logging of measurements in CSV formatted logs (about 2.5 times denser than json)
-  - HTTP(S) server (serve files from SD and respond to API calls)
+  - HTTP(S) server (serves files from SD and responds to API calls)
   - Web application files added (put the /www directory in root dir of SD card)
   
   
