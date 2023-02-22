@@ -29,7 +29,6 @@
 
 
 //#define DS3231    //Uncomment if using DS3231 instead of DS1307
-
 #ifdef DS3231
 #include <ErriezDs3231.h>
 #else

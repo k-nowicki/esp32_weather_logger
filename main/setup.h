@@ -73,6 +73,12 @@
 #define SD_ALLOCATION_UNIT_SIZE 16 * 512   //tradeoff between heap demand and speed
 
 /*******************************************************************************
+ *  Camera Setup
+ */
+
+#define CONFIG_FRAMESIZE_UXGA 1
+
+/*******************************************************************************
  *  System Setup
  */
 

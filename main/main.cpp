@@ -55,6 +55,7 @@
 #include "app.h"
 #include "kk_http_app/src/kk_http_app.h"
 #include "kk_http_app/src/kk_http_server_setup.h"
+#include "camera_helper.h"
 
 extern "C" {
   void app_main(void);
