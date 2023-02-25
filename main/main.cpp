@@ -142,6 +142,7 @@ void app_main(void){
 
 
   //BH1750 Initialization
+
   if(!g_lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire1)){
     ESP_LOGE(TAG, "BH1750 initialization failed!");
     for(;;); // Don't proceed, loop forever
@@ -155,7 +156,9 @@ void app_main(void){
   }else{
     ESP_LOGI(TAG, "BMP280 Pressure meter initialized.");
   }
+
   if(!g_rtc.begin(&Wire1)){
+
     ESP_LOGE(TAG, "RTC DS3231 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{

@@ -57,8 +57,6 @@ struct measurement{
 
 //Business logic global variables
 extern measurement g_curr_measures;	//Current measurements
-// Create RTC object
-
 
 //Sensor global objects
 extern BH1750 g_lightMeter;

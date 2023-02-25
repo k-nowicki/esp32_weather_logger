@@ -78,6 +78,7 @@ void vDisplayTask(void *arg){
   vTaskDelay(pdMS_TO_TICKS(1000));
   while(1){
     vTaskDelay(pdMS_TO_TICKS(100));
+
     tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip); //get IP address.
     tmp_measurements = get_latest_measurements();         //safely read current values
     time(&now);                                           //get time
