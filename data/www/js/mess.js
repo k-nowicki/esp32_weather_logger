@@ -1,7 +1,7 @@
 // Use ip address under development
 // Use "/" string when using from controller web site
 if(window.location.pathname.includes("/home") || window.location.pathname.includes("C:")){
-  var myIPaddress = "https://192.168.0.15/";
+  var myIPaddress = "https://192.168.0.20/";
 }
 else{
   var myIPaddress = "/";
@@ -22,6 +22,9 @@ var timestamp = 0;
 
 //Every 5sek get measurements
 setInterval(function () { GetMeasurements() ; }, 1000);
+
+setInterval(function () { updateImage() ; }, 5000);
+
 
 function DoCommand(command, targetElement, value) {
   var xmlhttp;
@@ -116,4 +119,11 @@ function convertMiliseconds(miliseconds, format) {
       default:
         return '' + days +'days '+ hours + ':'+ minutes + ':'+ seconds;
     }
-  }
+}
+ 
+function updateImage() {
+	var newImage = new Image();
+	newImage.src = "dcim/current.jpg?" + Date.now();
+	fetch(newImage.src, {cache: 'reload', mode: 'no-cors'});
+	document.getElementById("cam-current-image").src = newImage.src;
+}

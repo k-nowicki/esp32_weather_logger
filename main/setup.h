@@ -28,12 +28,12 @@
 //GPIO_04 -
 
 //DHT11 sensor line
-#define GPIO_DHT11    GPIO_NUM_33 //33
+#define GPIO_DHT11    GPIO_NUM_33
 //DS18B20 sensor line
 #define GPIO_DS18B20  GPIO_NUM_4
 //I2C Bus lines (OLED, RTC, BH1750, BMP280)
 #define I2C_SDA GPIO_NUM_13
-#define I2C_SCL GPIO_NUM_0
+#define I2C_SCL GPIO_NUM_4
 //Those are only informative statements, SD pins can not be changed:
 #define SD_CMD_PIN  GPIO_NUM_14
 #define SD_CLK_PIN  GPIO_NUM_15
@@ -76,7 +76,7 @@
  *  Camera Setup
  */
 
-#define CONFIG_FRAMESIZE_UXGA 1
+//#define CONFIG_FRAMESIZE_UXGA 1  //configured by menuconfig in KK Camera Configuration menu
 
 /*******************************************************************************
  *  System Setup
@@ -84,12 +84,13 @@
 
 #define STATS_TASK_PRIO     11
 #define DISPLAY_TASK_PRIO   13
-#define SENSORS_TASK_PRIO   14
-#define DHT11_TASK_PRIO     15
-#define RTC_TASK_PRIO       16
-#define SDAVGLG_TASK_PRIO   17
-#define SDCSVLG_TASK_PRIO   18
-#define SDJSLG_TASK_PRIO    18
+#define CAM_TASK_PRIO       10
+#define SENSORS_TASK_PRIO   15
+#define DHT11_TASK_PRIO     16
+#define RTC_TASK_PRIO       17
+#define SDAVGLG_TASK_PRIO   18
+#define SDCSVLG_TASK_PRIO   19
+#define SDJSLG_TASK_PRIO    19
 #define HTTP_TASK_PRIO     DISPLAY_TASK_PRIO
 
 #define STATS_TICKS         pdMS_TO_TICKS(10*1000)
@@ -104,4 +105,7 @@
 #define AVG_LOG_FILE_DIR "/www/logs/avg"  //directory holding avg logs without mount point (ex: "/www/avg/logs")
 #define AVG_MESUREMENTS_NO 60    //how many measurements takes to calculate average
 
+//Picture settings
+#define PIC_FILE_DIR "/www/dcim"  //directory holding pictures without mount point (ex: "/www/logs" puts logs in SD_MOUNT_POINT/www/dcim/picture.jpg)
+#define PIC_INTERVAL_S 5         //number of seconds between pictures
 #endif /* MAIN_SETUP_H_ */

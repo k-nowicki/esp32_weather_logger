@@ -78,12 +78,12 @@ void vDisplayTask(void *arg){
   vTaskDelay(pdMS_TO_TICKS(1000));
   while(1){
     vTaskDelay(pdMS_TO_TICKS(100));
-    g_display.clearDisplay();
-    g_display.setCursor(0, 0);     // Start at top-left corner
     tcpip_adapter_get_ip_info(TCPIP_ADAPTER_IF_STA, &ip); //get IP address.
     tmp_measurements = get_latest_measurements();         //safely read current values
     time(&now);                                           //get time
     localtime_r(&now, &timeinfo);
+    g_display.clearDisplay();
+    g_display.setCursor(0, 0);     // Start at top-left corner
     g_display.printf("%0d-%02d-%04d  %02d:%02d:%02d\n", timeinfo.tm_mday, timeinfo.tm_mon+1,
                    timeinfo.tm_year+1900, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
     g_display.printf("Intern T: %3.2F %cC\n", tmp_measurements.iTemp,'\xF8');

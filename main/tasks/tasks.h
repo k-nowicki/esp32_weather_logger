@@ -21,6 +21,7 @@ void vStatsTask(void*);
 void vSDJSLGTask(void*);
 void vSDCSVLGTask(void*);
 void vSDAVGLGTask(void*);
+void vCameraTask(void*);
 
 
 

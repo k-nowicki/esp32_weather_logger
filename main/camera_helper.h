@@ -9,27 +9,29 @@
 #define MAIN_CAMERA_HELPER_H_
 
 #include "setup.h"
+#include "app.h"
+#include "sensor.h"
+
 
 #if CONFIG_FRAMESIZE_VGA
-  int framesize = FRAMESIZE_VGA;
+  #define FRAMESIZE FRAMESIZE_VGA
   #define FRAMESIZE_STRING "640x480"
 #elif CONFIG_FRAMESIZE_SVGA
-  int framesize = FRAMESIZE_SVGA;
+  #define FRAMESIZE FRAMESIZE_SVGA
   #define FRAMESIZE_STRING "800x600"
 #elif CONFIG_FRAMESIZE_XGA
-  int framesize = FRAMESIZE_XGA;
+  #define FRAMESIZE FRAMESIZE_XGA
   #define FRAMESIZE_STRING "1024x768"
 #elif CONFIG_FRAMESIZE_HD
-  int framesize = FRAMESIZE_HD;
+  #define FRAMESIZE FRAMESIZE_HD
   #define FRAMESIZE_STRING "1280x720"
 #elif CONFIG_FRAMESIZE_SXGA
-  int framesize = FRAMESIZE_SXGA;
+  #define FRAMESIZE FRAMESIZE_SXGA
   #define FRAMESIZE_STRING "1280x1024"
 #elif CONFIG_FRAMESIZE_UXGA
-  int framesize = FRAMESIZE_UXGA;
+  #define FRAMESIZE FRAMESIZE_UXGA
   #define FRAMESIZE_STRING "1600x1200"
 #endif
-
 
 //Camera configuration structure
 extern camera_config_t camera_config;

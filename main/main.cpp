@@ -70,15 +70,17 @@ extern "C" {
 //Business logic global variables
 measurement g_curr_measures; // Current measurements
 
-#ifdef DS3231           // RTC object depending on used physical device
-ErriezDS3231 g_rtc;
-#else
+// RTC object depending on used physical device
+#ifdef CONFIG_RTC_DS1307
 ErriezDS1307 g_rtc;
+#elif CONFIG_RTC_DS3231
+ErriezDS3231 g_rtc;
 #endif
+
 //Sensor global objects
 BH1750 g_lightMeter(BH1750_ADDR);
-Adafruit_BMP280 g_pressureMeter(&Wire); // I2C
-Adafruit_SSD1306 g_display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+Adafruit_BMP280 g_pressureMeter(&Wire1); // I2C
+Adafruit_SSD1306 g_display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, OLED_RESET);
 
 //SD Card global object
 sdmmc_card_t * g_card;
@@ -103,25 +105,32 @@ void app_main(void){
   g_uart_mutex = xSemaphoreCreateMutex();
   g_card_mutex = xSemaphoreCreateMutex();
 
-//  initArduino();
+  //initArduino();
   //Allow other core to finish initialization
   vTaskDelay(pdMS_TO_TICKS(10));
 
+  if(init_camera(FRAMESIZE) != ESP_OK){
+    ESP_LOGE(TAG, "Camera initialization failed!");
+    for(;;); // Don't proceed, loop forever
+  }else{
+    ESP_LOGI(TAG, "Camera initialized.");
+  }
+
   //Set I2C interface
-  Wire.begin(I2C_SDA, I2C_SCL);
-  Wire.setClock(400000);
+  Wire1.begin(I2C_SDA, I2C_SCL);
+  Wire1.setClock(400000);
 
   //Setup OLED display
   if(!g_display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
     g_display.display();
     ESP_LOGE(TAG, "SSD1306 allocation failed");
-    for(;;); // Don't proceed, loop forever
+//    for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "SSD1306 OLED Display initialized.");
     init_app_screen();
   }
 
-//  search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
+  //search_i2c(); // search for I2C devices (helpful if any uncertainty about sensor addresses raised)
 
   //Set GPIOS for DHT11 and DS18B20 as GPIOs
   ESP_LOGI(TAG, "GPIO's configuration...");
@@ -133,7 +142,7 @@ void app_main(void){
 
 
   //BH1750 Initialization
-  if(!g_lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire)){
+  if(!g_lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire1)){
     ESP_LOGE(TAG, "BH1750 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{
@@ -146,7 +155,7 @@ void app_main(void){
   }else{
     ESP_LOGI(TAG, "BMP280 Pressure meter initialized.");
   }
-  if(!g_rtc.begin(&Wire)){
+  if(!g_rtc.begin(&Wire1)){
     ESP_LOGE(TAG, "RTC DS3231 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{
@@ -169,13 +178,14 @@ void app_main(void){
 
 
   //DS18B20 Initialization
-//  initialize_ds18b20();
+  //initialize_ds18b20();
 
   //Create business tasks:
   xTaskCreatePinnedToCore( vRTCTask, "RTC", 3096, NULL, RTC_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vCameraTask, "CAM", 3*1024, NULL, CAM_TASK_PRIO, NULL, tskNO_AFFINITY );
   //Loggers
   xTaskCreatePinnedToCore( vSDCSVLGTask, "SDCSVLG", 6*1024, NULL, SDCSVLG_TASK_PRIO, &g_vSDCSVLGTaskHandle, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSDJSLGTask, "SDJSLG", 6*1024, NULL, SDJSLG_TASK_PRIO, &g_vSDJSLGTaskHandle, tskNO_AFFINITY );

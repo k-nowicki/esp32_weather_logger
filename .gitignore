@@ -2,6 +2,7 @@
 .project
 .settings
 build/
+_build/
 main/display_helper.cpp
 main/display_helper.h
 extras/doc

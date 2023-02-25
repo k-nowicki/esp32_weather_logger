@@ -6,11 +6,11 @@
  */
 
 #include "setup.h"
-#include "app.h"
 #include "camera_helper.h"
 
+static const char *TAG = "CAMHLP";
 
-//
+//Board config for camera
 camera_config_t camera_config = {
   .pin_pwdn = CAM_PIN_PWDN,
   .pin_reset = CAM_PIN_RESET,
@@ -31,7 +31,7 @@ camera_config_t camera_config = {
   .pin_pclk = CAM_PIN_PCLK,
 
   //XCLK 20MHz or 10MHz for OV2640 double FPS (Experimental)
-  .xclk_freq_hz = 20000000,
+  .xclk_freq_hz = 2000000,
   .ledc_timer = LEDC_TIMER_0,
   .ledc_channel = LEDC_CHANNEL_0,
 
@@ -39,9 +39,10 @@ camera_config_t camera_config = {
   .frame_size = FRAMESIZE_VGA, //QQVGA-UXGA Do not use sizes above QVGA when not JPEG
 
   .jpeg_quality = 12, //0-63 lower number means higher quality
-  .fb_count = 1, //if more than one, i2s runs in continuous mode. Use only with JPEG
-  .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
-  .fb_location = CAMERA_FB_IN_PSRAM
+  .fb_count = 2, //if more than one, i2s runs in continuous mode. Use only with JPEG
+
+  .fb_location = CAMERA_FB_IN_PSRAM,
+  .grab_mode = CAMERA_GRAB_LATEST //CAMERA_GRAB_WHEN_EMPTY //
 };
 
 esp_err_t init_camera(int framesize){
@@ -49,7 +50,7 @@ esp_err_t init_camera(int framesize){
   ESP_LOGI(TAG, "grab_mode=%d", camera_config.grab_mode);
   ESP_LOGI(TAG, "fb_location=%d", camera_config.fb_location);
   //initialize the camera
-  camera_config.frame_size = framesize;
+  camera_config.frame_size = (framesize_t)framesize;
   esp_err_t err = esp_camera_init(&camera_config);
   if (err != ESP_OK){
     ESP_LOGE(TAG, "Camera Init Failed");
@@ -61,6 +62,7 @@ esp_err_t init_camera(int framesize){
 }
 
 esp_err_t camera_capture(char * FileName, size_t *pictureSize){
+  FILE* f;
   //clear internal queue
   for(int i=0;i<1;i++) {
     camera_fb_t * fb = esp_camera_fb_get();
@@ -74,12 +76,12 @@ esp_err_t camera_capture(char * FileName, size_t *pictureSize){
     ESP_LOGE(TAG, "Camera Capture Failed");
     return ESP_FAIL;
   }
-
   //replace this with your own function
   //process_image(fb->width, fb->height, fb->format, fb->buf, fb->len);
-  FILE* f = fopen(FileName, "wb");
+  f = fopen(FileName, "wb");
   if (f == NULL) {
     ESP_LOGE(TAG, "Failed to open file for writing");
+    ESP_LOGE(TAG, "PATH: %s", FileName);
     return ESP_FAIL;
   }
   fwrite(fb->buf, fb->len, 1, f);

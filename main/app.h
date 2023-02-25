@@ -26,14 +26,18 @@
 #include <dht11.h>
 #include <BH1750.h>
 #include "esp_camera.h"
+#include "camera_pin.h"
 
 
-//#define DS3231    //Uncomment if using DS3231 instead of DS1307
-#ifdef DS3231
-#include <ErriezDs3231.h>
-#else
+//Choosing between DS3231 and DS1307 is realized in menuconfig "KK RTC Configuration" by RTC_TYPE selection
+#ifdef CONFIG_RTC_DS1307
 #include <ErriezDS1307.h>
+extern ErriezDS1307 g_rtc;
+#elif CONFIG_RTC_DS3231
+#include <ErriezDs3231.h>
+extern ErriezDS3231 g_rtc;
 #endif
+
 //#include <owb.h>
 //#include <owb_rmt.h>
 //#include <ds18b20.h>
@@ -55,12 +59,6 @@ struct measurement{
 extern measurement g_curr_measures;	//Current measurements
 // Create RTC object
 
-
-#ifdef DS3231           // RTC object depending on used physical device
-extern ErriezDS3231 g_rtc;
-#else
-extern ErriezDS1307 g_rtc;
-#endif
 
 //Sensor global objects
 extern BH1750 g_lightMeter;
