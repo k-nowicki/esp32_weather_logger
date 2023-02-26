@@ -107,5 +107,6 @@
 
 //Picture settings
 #define PIC_FILE_DIR "/www/dcim"  //directory holding pictures without mount point (ex: "/www/logs" puts logs in SD_MOUNT_POINT/www/dcim/picture.jpg)
-#define PIC_INTERVAL_S 5         //number of seconds between pictures
+#define PICTURE_INTERVAL_M 5          //number of minutes between pictures
+#define FILENAME_LEN 25           //Length of camera picture filename NNN_DDMMYYY.jpg
 #endif /* MAIN_SETUP_H_ */

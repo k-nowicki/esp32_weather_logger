@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 #include <sys/unistd.h>
 #include <sys/stat.h>
 #include "freertos/FreeRTOS.h"
@@ -238,6 +239,48 @@ void ensure_card_works(void){
   xSemaphoreGive(g_card_mutex);
   if(status != ESP_OK)
     reinit_sd();
+}
+
+/*******************************************************************************
+ * File system helpers
+ */
+
+/**
+ * @param path Path to directory to search
+ * @return  pointer to string containing newest filename
+ */
+char *get_newest_file(char *path) {
+  const char *TAG = "GET_NEWFILE";
+  DIR *dir;
+  struct dirent *ent;
+  struct stat st;
+  time_t newest = 0;
+  char *newest_file = NULL;
+
+  dir = opendir(path);
+  if (dir == NULL) {
+    ESP_LOGE(TAG, "Cannot open DIR!");
+    return NULL;
+  }
+
+  while ((ent = readdir(dir)) != NULL) {
+    char filename[PATH_MAX];
+    snprintf(filename, PATH_MAX, "%s/%s", path, ent->d_name);
+
+    if (stat(filename, &st) == -1) {
+      ESP_LOGE(TAG, "Cannot stat!");
+      continue;
+    }
+
+    if (S_ISREG(st.st_mode) && st.st_mtime > newest) {
+      newest = st.st_mtime;
+      if (newest_file != NULL) { free(newest_file); }
+      newest_file = strdup(ent->d_name);
+    }
+  }
+  closedir(dir);
+  ESP_LOGE(TAG, "Newest file found: %s", newest_file);
+  return newest_file;
 }
 
 /*******************************************************************************

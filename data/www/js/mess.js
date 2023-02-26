@@ -23,7 +23,7 @@ var timestamp = 0;
 //Every 5sek get measurements
 setInterval(function () { GetMeasurements() ; }, 1000);
 
-setInterval(function () { updateImage() ; }, 5000);
+setInterval(function () { updateImage() ; }, 2500);
 
 
 function DoCommand(command, targetElement, value) {
@@ -123,7 +123,7 @@ function convertMiliseconds(miliseconds, format) {
  
 function updateImage() {
 	var newImage = new Image();
-	newImage.src = "dcim/current.jpg?" + Date.now();
+	newImage.src = "dcim/0/current.jpg?" + Date.now();
 	fetch(newImage.src, {cache: 'reload', mode: 'no-cors'});
 	document.getElementById("cam-current-image").src = newImage.src;
 }
