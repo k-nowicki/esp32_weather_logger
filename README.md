@@ -27,7 +27,7 @@ DHT11 sensor needs to be soldered to GPIO33 which is hardwired to onboard LED (*
 
 <img src="extras/pics/gpio33_v2.0_mini.png" alt="GPIO33" width="80%"/>
 
-Warning! On the schematic above SCL and SDA are swapped, you need to change definitions in setup.h or connect them the other way round.diffuser
+Warning! On the schematic above SCL and SDA are swapped, you need to change definitions in setup.h or connect them the other way round.
 
 ## Environment requirements
 Warning: This is not an arduino project! It needs ESP-IDF environment installed on development machine (developed on ESP-IDF v4.4.3).
@@ -55,6 +55,7 @@ Instructions on how to connect and flash esp32 can be found also on [espressiff 
   
   *) DHT11 sensor needs to be connected to GPIO33 which on the board is not connected to any pin. Instead Adafruit designed the board so that the GPIO33 (which unlike any other available pin has no second function) is connected exclusively to on board LED. 
 It may be that connections can be rearranged in the way that everything fits nicely, but this needs more research...
+
 **) Camera needs GPIO0 as xclk signal hence it cannot be I2C signal. To resolve this issue I2C_SCL needs to be defined as GPIO4. But for it to work there is another small hack needed. R13 resistor needs to be desoldered from esp32-cam board, and I2C_SCL needs to be connected directly to GPIO4 pin. If R13 is not removed, the FLASH_LED driver forces GPIO4 to be max 0.7V and I2C bus will not work.
 
 ## Housing
