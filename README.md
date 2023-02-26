@@ -1,6 +1,6 @@
 # Weather Station and logger based on ESP32
 
-The Weather Station measures: Temperature, Humidity, Atm Pressure and Solar exposure. It also keeps track of current date and time and take pictures. All of this data is logged on local storage (i.e. SD card). Main measurements are displayed in real time on the device OLED screen. All current and historical data can also be viewed by the web intreface as well as fetched by API.
+The Weather Station measures: Temperature, Humidity, Atm. Pressure and Solar exposure. It also keeps track of current date and time and take pictures. All of this data is logged on local storage (i.e. SD card). Main measurements are displayed in real time on the device OLED screen. All current and historical data can also be viewed by the web interface as well as fetched by API.
 All user interactions are made by web interface. Besides display and on/off switch, the device has no other way to communicate with user.
 The purpose of the device is to deliver historical weather informations along with pictures of those conditions, for further analysis.
 Device can be used as weather conditions logger, time-lapse camera or just home weather station.
@@ -19,10 +19,15 @@ RTC (Var 2)| [TinyRTC / DS1307](https://www.analog.com/media/en/technical-docume
 
 
 ## Connections
-<img src="extras/pics/image_v2.0_mini.png" alt="Wiring diagram" width="80%"/>
+<img src="extras/pics/image_v3.0_mini.png" alt="Wiring diagram" width="80%"/>
+
+R13 resistor needs to be desoldered (**)
+
 DHT11 sensor needs to be soldered to GPIO33 which is hardwired to onboard LED (*)
+
 <img src="extras/pics/gpio33_v2.0_mini.png" alt="GPIO33" width="80%"/>
 
+Warning! On the schematic above SCL and SDA are swapped, you need to change definitions in setup.h or connect them the other way round.diffuser
 
 ## Environment requirements
 Warning: This is not an arduino project! It needs ESP-IDF environment installed on development machine (developed on ESP-IDF v4.4.3).
@@ -44,7 +49,16 @@ Instructions on how to connect and flash esp32 can be found also on [espressiff 
   - Logging of measurements in CSV formatted logs (about 2.5 times denser than json)
   - HTTP(S) server (serves files from SD and responds to API calls)
   - Web application files added (put the /www directory in root dir of SD card)
+  - Camera takes pictures every 5sec. Current picture is displayed on index web page below measurements.
+  - Every 5 minutes new picture is saved to SD card
   
   
-  *) DHT11 sensor needs to be connected to GPIO33 which on the board is not connected to any pin. Instead Adafruit designed the board so that the GPIO33 (which unlike any other available pin has no second function) is connected exclusively to onboard LED. 
-It may be that connections can be rearanged in the way that everyfing fits nicely, but this needs more research...
+  *) DHT11 sensor needs to be connected to GPIO33 which on the board is not connected to any pin. Instead Adafruit designed the board so that the GPIO33 (which unlike any other available pin has no second function) is connected exclusively to on board LED. 
+It may be that connections can be rearranged in the way that everything fits nicely, but this needs more research...
+**) Camera needs GPIO0 as xclk signal hence it cannot be I2C signal. To resolve this issue I2C_SCL needs to be defined as GPIO4. But for it to work there is another small hack needed. R13 resistor needs to be desoldered from esp32-cam board, and I2C_SCL needs to be connected directly to GPIO4 pin. If R13 is not removed, the FLASH_LED driver forces GPIO4 to be max 0.7V and I2C bus will not work.
+
+## Housing
+As a weather station the device needs to be directly exposed to weather conditions.
+I designed enclosure for 3d printing. Files in stl format can be found in extras/case.
+Enclosure is designed with 25,4mm x 76,2mm glass window that utilizes standard 1x3 inch microscope slides. 
+The best slides are one side matted which works as diffuser for light sensor.
