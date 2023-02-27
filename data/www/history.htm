@@ -44,10 +44,10 @@
   	<div class="container pt-3 mb-3">
       <div class="row mb-3 justify-content-md-center">
         <div class="col-1">
-          <input class="btn btn-primary" id="button0" type="button" onclick="SwitchCSVLog(0)" value="Today" title="Kliknij aby Wczytać log nr 0" />
+          <input class="btn btn-primary" id="button0" type="button" onclick="SwitchCSVLog(0);" value="Today" title="Kliknij aby Wczytać log nr 0" />
         </div>
         <div class="col-1">
-          <input class="btn btn-primary" id="button1" type="button" onclick="SwitchCSVLog(1)" value="Yesterday" title="Kliknij aby Wczytać log nr 1" />
+          <input class="btn btn-primary" id="button1" type="button" onclick="SwitchCSVLog(1);" value="Yesterday" title="Kliknij aby Wczytać log nr 1" />
         </div>
         <div class="col-4">
         	<div class="form-inline">
@@ -78,15 +78,18 @@
         <div class="card-body">
           <div class="row mb-3">
             <div class="col-12">
-              <div class="chart text-danger text-center" id="chartContainer1" >
-                ^ Choose log file above (0 is today, 1 is yesterday and so on) ^
+              <div class="chart text-primary text-center" id="chartContainer1" >
+                ^ Choose log file above (today, yesterday or choose date to be displayed) ^                
               </div>
             </div>
           </div>
           
           <div class="row mb-3">
             <div class="col-12">
-              <div class="chart" id="chartContainer2" ></div>
+              <div class="chart text-primary text-center" id="chartContainer2" >
+              	v Check picture list below v
+              </div>
+              
             </div>
           </div>
           
@@ -103,6 +106,17 @@
           </div>
         </div>
       </div>
+    </div>
+    <div class="container pt-3 mb-3">
+      <div class="card border-muted mb-3">
+        <div class="card-header">
+          Pictures stored on Device
+        </div>
+        <div id="pictures" class="card-body">
+          <ol id="pic_list">
+          </ol>
+        </div>
+	  </div>
     </div>
     <div class="container pt-3 mb-3">
       <div class="card border-muted mb-3">

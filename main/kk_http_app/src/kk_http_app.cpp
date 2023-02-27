@@ -111,7 +111,46 @@ esp_err_t file_get_handler(httpd_req_t *req){
   return ESP_OK;
 }
 
+/**
+ * \brief Handler to execute HTTP GET /pic_list/ requests
+ *
+ * Respond with picture list for date given in /pic_list/?DDMMYYY
+ *
+ * @param req Request pointer
+ * @return ESP_OK
+ */
+esp_err_t pic_get_handler(httpd_req_t *req){
+  char* list_buf = NULL;
 
+  char* date = strrchr(req->uri, '?'); //get date from uri which is right after ? sign
+  if(date != NULL) {  //if uri contains parameteters
+    date += 1;
+  }else{              //if not - Respond with 404 Not Found
+    ESP_LOGE(TAG, "Failed to recognize path: %s", req->uri);
+    httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "Asset does not exist");
+    return ESP_FAIL;
+  }
+
+  list_buf = (char*)malloc(PIC_LIST_BUFFER_SIZE);    //allocate memory
+  if(list_buf == NULL){
+    ESP_LOGE(TAG, "Cannot allocate memory for picture list! Requested size: %i Bytes", PIC_LIST_BUFFER_SIZE);
+    httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to allocate memory for file list!");
+    return ESP_FAIL;
+  }
+  ESP_LOGI(TAG, "Generating list of pictures from %s", date);
+  ESP_LOGI(TAG, "List from path %s", CAM_FILE_PATH);
+  generate_html_list((char*)CAM_FILE_PATH, date, list_buf);
+  ESP_LOGE(TAG, "Zawartosc listy:\n %s", list_buf);
+
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+  httpd_resp_set_type(req, "text/html");
+#ifdef CONFIG_KK_HTTPD_CONN_CLOSE_HEADER
+  httpd_resp_set_hdr(req, "Connection", "close");
+#endif
+  httpd_resp_send(req, list_buf, -1);  // Response body can be empty
+  free(list_buf);
+  return ESP_OK;
+}
 
 
 /**
@@ -319,3 +358,54 @@ const char* get_path_from_uri(char *dest, const char *base_path, const char *uri
 }
 
 
+/**
+ * Generating html numbered list of links to pictures for given path and date
+ * @param path Path to directory for which list is created
+ * @param date  Date that files must match
+ * @param list_buf pointer to preallocated buffer for generated list
+ */
+void generate_html_list(char* path, char* date, char *list_buf) {
+  DIR* dir = opendir(path);
+  struct tm tm_file;
+  struct tm tm_filter = {0,0,0,0,0,0,0,0,0};
+  char time_str[32];
+  int cx = 0;
+  struct dirent* entry;
+  struct stat file_stat;
+  char file_path[FILEPATH_LEN_MAX];
+
+  if (!dir) {
+    ESP_LOGE(TAG, "Failed to open directory %s", path);
+    return;
+  }
+
+  strptime(date, "%d/%m/%Y", &tm_filter);
+  cx = sprintf(list_buf, "<ol id=\"pic_list\">Lista zdjęć z dnia %s:\n", date);
+  if(cx > 0) { list_buf += cx; }
+
+  while ((entry = readdir(dir)) != NULL) {
+    if (entry->d_type == DT_REG) {
+      char* file_ext = strrchr(entry->d_name, '.');
+      if (file_ext && strcmp(file_ext, ".jpg") == 0) {
+
+        #pragma GCC diagnostic push // use compiler specific pragmas to disable the "directive output may be truncated writing" error
+        #pragma GCC diagnostic ignored "-Wformat-truncation"
+        snprintf(file_path, FILEPATH_LEN_MAX, "%s/%s", path, entry->d_name);
+        #pragma GCC diagnostic pop
+
+        if (stat(file_path, &file_stat) == 0) {
+          localtime_r(&file_stat.st_mtime, &tm_file);
+          if (tm_file.tm_year == tm_filter.tm_year && tm_file.tm_mon == tm_filter.tm_mon && tm_file.tm_mday == tm_filter.tm_mday) {
+            strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", &tm_file);
+            cx = sprintf(list_buf, "<li><a href=\"dcim/%s\">%s</a> - %s</li>\n", entry->d_name, entry->d_name, time_str);
+            if(cx > 0) { list_buf += cx; }
+          }
+        } else {
+          ESP_LOGE(TAG, "Failed to stat file %s", file_path);
+        }
+      }
+    }
+  }
+  sprintf(list_buf, "</ol>\n");
+  closedir(dir);
+}

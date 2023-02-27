@@ -107,6 +107,9 @@
 
 //Picture settings
 #define PIC_FILE_DIR "/www/dcim"  //directory holding pictures without mount point (ex: "/www/logs" puts logs in SD_MOUNT_POINT/www/dcim/picture.jpg)
+#define CAM_FILE_PATH static_cast<const char *>(SD_MOUNT_POINT PIC_FILE_DIR)
 #define PICTURE_INTERVAL_M 5          //number of minutes between pictures
 #define FILENAME_LEN 25           //Length of camera picture filename NNN_DDMMYYY.jpg
+#define FILEPATH_LEN_MAX 40       //Maximum length of full path to picture (for buffer allocation- keep it short, but not shorter than necessary)
+#define PIC_LIST_BUFFER_SIZE  (1440/PICTURE_INTERVAL_M)*(2*FILENAME_LEN+24) +55 //(MINUTES_IN_DAY/PICTURE_INTERVAL_M)*(2*FILENAME_LEN + IL_TEXT_LEN) + HTML_WRAP_TEXT_LEN
 #endif /* MAIN_SETUP_H_ */

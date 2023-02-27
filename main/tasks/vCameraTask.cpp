@@ -53,7 +53,6 @@
 char *get_next_file(char *path);
 static bool is_time_to_get_picture(void);
 static const char *TAG = "CAMERA";
-#define CAM_FILE_PATH static_cast<const char *>(SD_MOUNT_POINT PIC_FILE_DIR)
 
 /*******************************************************************************/
 
@@ -67,7 +66,7 @@ void vCameraTask(void*){
   TickType_t xLastWakeTime;
   size_t pictureSize;
   char *filename = NULL;
-  char pic_filename[60];
+  char pic_filename[FILEPATH_LEN_MAX];
   vTaskDelay(pdMS_TO_TICKS(10000));  //wait 10 secs (rtc update, logs initialization etc)
 
   xLastWakeTime = xTaskGetTickCount();   //https://www.freertos.org/xtaskdelayuntiltask-control.html
@@ -105,7 +104,6 @@ void vCameraTask(void*){
     xTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(5000) );
   }
 }
-
 
 
 /**

@@ -7,7 +7,7 @@ var chart4;
 const a_day = 1000*60*60*24;
 
 if(window.location.pathname.includes("/home") || window.location.pathname.includes("C:")){
-  var myIPaddress = "https://192.168.0.15/";
+  var myIPaddress = "https://192.168.0.20/";
 }
 else{
   var myIPaddress = "/";
@@ -25,6 +25,7 @@ $('#datepicker').datepicker({
     modal: true,
     change: function (e) {
 		fetch_logs_date_callback();
+		fetch_picture_list_callback();
 	}
 });
 
@@ -37,6 +38,18 @@ function fetch_logs_date_callback(){
 	addLoader();
 	closeError();
 }
+
+function fetch_picture_list_callback(){
+	var date;
+	date = $('#datepicker').val();
+	fetch_picture_list_for(new Date(Date(date)))
+}
+
+function fetch_picture_list_for(date){
+	FetchPicList('pic_list/?'+ format_date(date));
+}
+
+
 
 function instantiateCharts(){
   chart1 = new CanvasJS.Chart("chartContainer1", {
@@ -270,8 +283,15 @@ function SwitchCSVLog(log_index){
 	FetchCSVLog(log_name);
 	$(".btn").attr("disabled", false);
 	$("#button"+log_index).attr("disabled", true);
+	var date = log_index == 0 ? new Date : yesterdayDate();
+	fetch_picture_list_for(date);
 	addLoader();
 	closeError();
+}
+
+function yesterdayDate(){
+	var date = new Date();
+	return new Date(date.setDate(date.getDate()-1));
 }
 
 //Fething JS Log by index
@@ -300,6 +320,30 @@ var config = {
 }
 
 //fetch log from weather station
+function FetchPicList(path){
+  var xmlhttp, path;
+  if (window.XMLHttpRequest){ xmlhttp = new XMLHttpRequest();  }
+  else { xmlhttp = new ActiveXObject("Microsoft.XMLHTTP"); }
+  xmlhttp.onreadystatechange = function() {
+    if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
+		newPicList = document.createElement('ol');
+		newPicList.innerHTML = xmlhttp.responseText;
+		oldPicList = document.getElementById("pic_list");
+		oldPicList.parentNode.replaceChild(newPicList, oldPicList);
+		removeLoader();
+		displaySuccess("Picture list loaded successfully!");
+		displayLogErrors();
+		setTimeout('closeBar()',5000);
+    }else if(xmlhttp.readyState == 4){
+      removeLoader();
+      displayError("Can not find any pictures.");
+    }
+  }
+  xmlhttp.open("GET", myIPaddress + path, true);
+  xmlhttp.send();
+}
+
+//fetch log from weather station
 function FetchCSVLog(log_fname){
   var xmlhttp, path;
   if (window.XMLHttpRequest){ xmlhttp = new XMLHttpRequest();  }
@@ -317,6 +361,7 @@ function FetchCSVLog(log_fname){
 		displaySuccess("Data loaded successfully!");
 		displayLogErrors();
 		setTimeout('closeBar()',5000);
+		setTimeout('closeError()',5000);
     }else if(xmlhttp.readyState == 4){
       removeLoader();
       displayError("Can not find that log file. Choose another one.");
@@ -447,4 +492,12 @@ function closeError(){
 function closeBar(){
   var el = $('.bar');
   el.fadeOut(800, function() { el.remove(); });  
+}
+
+function format_date(date){
+	const day = ("0" + date.getDate()).slice(-2);
+	const month = ("0" + (date.getMonth() + 1)).slice(-2);
+	const year = date.getFullYear();
+	const formattedDate = day + '/' + month + '/' + year;
+	return formattedDate;
 }

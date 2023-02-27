@@ -16,7 +16,7 @@ Device can be used as weather conditions logger, time-lapse camera or just home 
 |OLED |[GME12864-41/ SSD1306](https://nettigo.pl/products/wyswietlacz-oled-0-96-i2c-128x64-ssd1306-bialy) \| [Reserve info](https://datasheethub.com/ssd1306-128x64-mono-0-96-inch-i2c-oled-display/) |[Adafruit_SSD1306](https://github.com/adafruit/Adafruit_SSD1306); [Adafruit-GFX-Library](https://github.com/adafruit/Adafruit-GFX-Library); [arduino-esp32](https://github.com/espressif/arduino-esp32) |
 RTC (Var 1)| [HW084 / DS3231](http://www.szhwmake.com/prod_view.aspx?TypeId=83&Id=350&FId=t3:83:3) \| [Reserve info](https://lastminuteengineers.com/ds3231-rtc-arduino-tutorial/) |[ErriezDS3231 (modified)](https://github.com/k-nowicki/ErriezDS3231)|
 RTC (Var 2)| [TinyRTC / DS1307](https://www.analog.com/media/en/technical-documentation/data-sheets/DS1307.pdf) \| [Reserve info](https://lastminuteengineers.com/ds1307-rtc-arduino-tutorial/) | [ErriezDS1307 (modified)](https://github.com/Erriez/ErriezDS1307)|
-
+| SD Card  | Any standard SDSC/SDHC/SDXC Card<br/>(preffered at least 8GB for picture storage)  | - |
 
 ## Connections
 <img src="extras/pics/image_v3.0_mini.png" alt="Wiring diagram" width="80%"/>
@@ -30,33 +30,52 @@ DHT11 sensor needs to be soldered to GPIO33 which is hardwired to onboard LED (*
 Warning! On the schematic above SCL and SDA are swapped, you need to change definitions in setup.h or connect them the other way round.
 
 ## Environment requirements
-Warning: This is not an arduino project! It needs ESP-IDF environment installed on development machine (developed on ESP-IDF v4.4.3).
+This project needs ESP-IDF environment installed on development machine (developed on ESP-IDF v4.4.3).
 [Follow the instructions](https://docs.espressif.com/projects/esp-idf/en/v4.4.3/esp32/get-started/index.html "ESP-IDF Framework") to install all necessary software. After installing check your setup first with one of the ESP-IDF examples.
 
 ## How to flash your ESP32
-Instructions on how to connect and flash esp32 can be found also on [espressiff docs](https://docs.espressif.com/projects/esp-idf/en/v3.3.5/get-started-cmake/index.html#step-9-flash-to-a-device "espressiff docs").
+Instructions on how to connect and flash esp32 can be found also on [espressif docs](https://docs.espressif.com/projects/esp-idf/en/v3.3.5/get-started-cmake/index.html#step-9-flash-to-a-device "espressiff docs").
 
 ## Project status: under development
- This project is still under development. Majority of features mentioned above are not implemented yet.
+ This project is still under development. Not all features mentioned above are implemented yet.
  
  What is implemented:
-  - OLED Display displays current measurements, date and time
+  - OLED Display displays current measurements, date, time and IP address
   - Sensors: pressure, temperature from two sensors, humidity and light
   - External and internal RTCs with periodic NTP time sync
-  - WiFi connectivity (with credentials configured by menuconfig for now)
-  - SD card with file system (sadly requires physical hacking of the esp32-cam board *)
-  - Logging of measurements in json formatted logs 
-  - Logging of measurements in CSV formatted logs (about 2.5 times denser than json)
-  - HTTP(S) server (serves files from SD and responds to API calls)
-  - Web application files added (put the /www directory in root dir of SD card)
+  - WiFi connectivity (with credentials configured by menuconfig)
+  - SD card with file system
+  - Logging of measurements in json and CSV formatted logs in two densities (1/min -averaged and 1/sec)
+  - HTTPS server (serves files from SD and responds to API calls)
   - Camera takes pictures every 5sec. Current picture is displayed on index web page below measurements.
   - Every 5 minutes new picture is saved to SD card
+  - Web application for displaying measurements, pictures and logs (with https)
   
-  
-  *) DHT11 sensor needs to be connected to GPIO33 which on the board is not connected to any pin. Instead Adafruit designed the board so that the GPIO33 (which unlike any other available pin has no second function) is connected exclusively to on board LED. 
-It may be that connections can be rearranged in the way that everything fits nicely, but this needs more research...
+  *) DHT11 sensor needs to be connected to GPIO33 which on the board is not connected to any external I/O pin. Instead Adafruit designed the board so that the GPIO33 (which unlike any other available pin has no second function) is connected exclusively to on board LED. 
 
-**) Camera needs GPIO0 as xclk signal hence it cannot be I2C signal. To resolve this issue I2C_SCL needs to be defined as GPIO4. But for it to work there is another small hack needed. R13 resistor needs to be desoldered from esp32-cam board, and I2C_SCL needs to be connected directly to GPIO4 pin. If R13 is not removed, the FLASH_LED driver forces GPIO4 to be max 0.7V and I2C bus will not work.
+**) I2C_SCL needs to be defined as GPIO4 (There is no other free IO that can be used as I2C signal). But for it to work there is another small hack needed. R13 resistor needs to be desoldered from esp32-cam board. If R13 is not removed, the FLASH_LED driver forces GPIO4 to be max 0.7V and I2C bus will not work.
+
+## Assembly and getting ready
+Once you have all modules and parts needed as well as software installed:
+ - prepare the esp32 board and connect all as shown on the schematic above
+ - copy *www* directory with its content to root dir of SD card
+ - use menuconfig ( <code>idf.py menuconfig</code> from project root dir) to set:
+  - WiFi credentials [KK_Connection_Configuration]
+  - RTC type [KK_RTC_Configuration]
+ - use setup.h to verify/set:
+  - I2C_SDA and I2C_SCL to be consistent with actual connections
+ - compile the code <code>idf.py build</code>
+ - connect the esp32 board to USB and enter flash mode (pull-down GPIO0 and press RESET button)
+ - upload flash content and run serial monitor <code>idf.py -p \<COM_PORT> flash monitor</code>  
+Replace <code>\<COM_PORT></code> with that in your setup, for example COM4 on Windows or /dev/ttyUSB0 on Linux.
+ - after flashing reset your board again, with GPIO0 disconnected from ground this time
+
+If everything done correctly, you should see immediately debug output on the serial monitor.
+After several seconds there should be all measurements, date, time and IP address of the station visible on the display.
+You can now use this IP to open device web page. Remember that only https protocol works, put <code>https://</code> before IP in your browser! 
+It may be also necessary to confirm unsafe access in the browser, as device has no proper third-party certificate installed.
+ 
+
 
 ## Housing
 As a weather station the device needs to be directly exposed to weather conditions.

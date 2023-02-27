@@ -129,6 +129,13 @@ httpd_handle_t start_webserver(const char *base_path){
   };
   httpd_register_uri_handler(server, &uri_post_set);  //handles POST /set/*
 
+  const httpd_uri_t uri_get_pic_list = {
+    .uri      = "/pic_list/*",
+    .method   = HTTP_GET,
+    .handler  = pic_get_handler,
+    .user_ctx = server_data
+  };
+  httpd_register_uri_handler(server, &uri_get_pic_list);  //handles GET /pic/*
 
   const httpd_uri_t file_get = {
     .uri      = "/*",

@@ -45,6 +45,16 @@
 esp_err_t file_get_handler(httpd_req_t *req);
 
 /**
+ * \brief Handler to execute HTTP GET /pic/ requests
+ *
+ * Respond with picture OL list for date given in /pic/?DDMMYYY
+ *
+ * @param req Request pointer
+ * @return ESP_OK
+ */
+esp_err_t pic_get_handler(httpd_req_t *req);
+
+/**
  * Handler to redirect incoming GET request for / to /index.html
  * @param req Request data
  * @return ESP_OK
@@ -130,6 +140,13 @@ esp_err_t set_content_type_from_file(httpd_req_t *req, const char *filename);
  */
 const char* get_path_from_uri(char *dest, const char *base_path, const char *uri, size_t destsize);
 
+/**
+ *
+ * @param path Path to directory
+ * @param date Date of interest
+ * @param list_buf pointer to buffer for generated list. Buffer must be initialized and huge (recommended is 32KB)
+ */
+void generate_html_list(char* path, char* date, char *list_buf);
 
 
 //#ifdef __cplusplus
