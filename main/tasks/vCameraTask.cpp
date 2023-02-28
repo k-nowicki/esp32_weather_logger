@@ -43,15 +43,16 @@
 #include <protocol_common.h>
 #include <k_math.h>
 #include "camera_helper.h"
-
+#include "ff.h"
 
 //App headers
 #include "tasks.h"
 
 #define PICTURE_INTERVAL_S (PICTURE_INTERVAL_M * 60)
 
-char *get_next_file(char *path);
 static bool is_time_to_get_picture(void);
+char *get_next_file_full_path(char *path);
+static void ensure_todays_path_exist(char *path);
 static const char *TAG = "CAMERA";
 
 /*******************************************************************************/
@@ -67,6 +68,7 @@ void vCameraTask(void*){
   size_t pictureSize;
   char *filename = NULL;
   char pic_filename[FILEPATH_LEN_MAX];
+
   vTaskDelay(pdMS_TO_TICKS(10000));  //wait 10 secs (rtc update, logs initialization etc)
 
   xLastWakeTime = xTaskGetTickCount();   //https://www.freertos.org/xtaskdelayuntiltask-control.html
@@ -85,9 +87,9 @@ void vCameraTask(void*){
     //if it is time to permanently save picture - determine the filename
     if(is_time_to_get_picture() == true){
       ESP_LOGI(TAG, "Time to take picture!!");
-      filename = get_next_file((char *)CAM_FILE_PATH);
+      filename = get_next_file_full_path((char *)CAM_FILE_PATH);  //warning- this allocates memory that needs to be freed
       if(filename != NULL){
-        sprintf(pic_filename, "%s/%s", CAM_FILE_PATH, filename );
+        strcpy(pic_filename, filename );
         free(filename);
         ESP_LOGI(TAG, "Successfully created Filename: %s", pic_filename);
       }else{
@@ -105,42 +107,37 @@ void vCameraTask(void*){
   }
 }
 
-
 /**
- * @param path Path to directory
- * @return next filename
+ * @param path Path to root dcim directory
+ * @return next filename with date specific path i.e. next file in <path>/2023/02/28/
  */
-char *get_next_file(char *path) {
-  char *newest_file = get_newest_file(path);
-  if (newest_file == NULL) {
-      return NULL;
-  }
+char *get_next_file_full_path(char *path) {
+  char today_path[FILENAME_LEN];
+  char full_dir_path[FILEPATH_LEN_MAX];
 
-  char *next_file = (char *)malloc(FILENAME_LEN + 1);
+  ensure_todays_path_exist(path);
+
+  //prepare full path to target dir
+  get_today_path(today_path);
+  sprintf(full_dir_path, "%s%s", path, today_path);
+
+  char *newest_file = get_newest_file(full_dir_path);
+  if (newest_file == NULL) { return NULL; }
+
+  char *next_file = (char *)malloc(60);
   if (next_file == NULL) {
       ESP_LOGE(TAG, "Can not allocate memory!");
       free(newest_file);
       return NULL;
   }
 
-  time_t now = time(NULL);
-  struct tm *tm_now = localtime(&now);
-
-  uint32_t nnn, dd, mm, yyyy;
-  sscanf(newest_file, "%03d_%02d%02d%04d.jpg", &nnn, &dd, &mm, &yyyy);
-
-  if (dd == tm_now->tm_mday && mm == tm_now->tm_mon + 1 && yyyy == tm_now->tm_year + 1900) {
-      nnn++;
-  } else {
-      nnn = 1;
-  }
-
-  snprintf(next_file, FILENAME_LEN + 1, "%03d_%02d%02d%04d.jpg", nnn, tm_now->tm_mday, tm_now->tm_mon + 1, (tm_now->tm_year + 1900)%10000u);
-
+  uint32_t nnn;
+  sscanf(newest_file, "%03d.jpg", &nnn);
+  nnn++;
+  sprintf(next_file, "%s/%03d.jpg", full_dir_path, nnn);
   free(newest_file);
   return next_file;
 }
-
 
 /**
  * @return true if PICTURE_INTERVAL_S has passed since last true returned
@@ -158,4 +155,57 @@ static bool is_time_to_get_picture(void) {
     } else {
         return false;
     }
+}
+
+/**
+ * @param path Path to root dcim directory for pictures
+ * Function create directories needed to store pictures for current date
+ * according to the pattern: path/YYYY/MM/DD/
+ * where YYYY is always 4 digit year
+ *  MM is always 2 digit month
+ *  DD is always 2 digit day of the month
+ *
+ */
+static void ensure_todays_path_exist(char *path){
+  esp_err_t res;
+  time_t now = 0;
+  struct tm timeinfo;
+  char pic_filename[FILEPATH_LEN_MAX];
+  char * path_end_ptr = NULL;
+  char * path_start_ptr = NULL;
+
+  //fetch localtime
+  now = time(NULL);
+  localtime_r(&now, &timeinfo);
+  //set path_start_ptr to the
+  path_start_ptr = pic_filename;
+
+  //create YYYY directory
+  sprintf(pic_filename, "%s/%04d", path, (timeinfo.tm_year+1900) );
+  res = mkdir(pic_filename, 0777);
+  if(res != FR_OK && res != FR_EXIST){
+    ESP_LOGE(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
+  }else{
+    ESP_LOGI(TAG, "Directory '%s' created successfully!", pic_filename);
+  }
+  path_end_ptr = path_start_ptr + strlen(pic_filename); //set end pointer to end of path
+
+  //create MM directory
+  sprintf(path_end_ptr, "/%02d", timeinfo.tm_mon+1 );
+  res = mkdir(pic_filename, 0777);
+  if(res != FR_OK && res != FR_EXIST){
+    ESP_LOGE(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
+  }else{
+    ESP_LOGI(TAG, "Directory '%s' created successfully!", pic_filename);
+  }
+  path_end_ptr = path_start_ptr + strlen(pic_filename); //set pointer to end of path
+
+  //create DD directory
+  sprintf(path_end_ptr, "/%02d", timeinfo.tm_mday );
+  res = mkdir(pic_filename, 0777);
+  if(res != FR_OK && res != FR_EXIST){
+    ESP_LOGE(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
+  }else{
+    ESP_LOGI(TAG, "Directory '%s' created successfully!", pic_filename);
+  }
 }

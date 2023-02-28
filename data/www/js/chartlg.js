@@ -42,7 +42,12 @@ function fetch_logs_date_callback(){
 function fetch_picture_list_callback(){
 	var date;
 	date = $('#datepicker').val();
-	fetch_picture_list_for(new Date(Date(date)))
+	parts = date.split("-");
+	var day = parts[0];
+	var month = parts[1];
+	var year = parts[2] < 100 ? 2000 + parseInt(parts[2]) : parseInt(parts[2]); // ustaw rok XXI wieku, jeśli jest mniejszy niż 100
+	date = new Date(year, month - 1, day);
+	fetch_picture_list_for(date)
 }
 
 function fetch_picture_list_for(date){
@@ -498,6 +503,6 @@ function format_date(date){
 	const day = ("0" + date.getDate()).slice(-2);
 	const month = ("0" + (date.getMonth() + 1)).slice(-2);
 	const year = date.getFullYear();
-	const formattedDate = day + '/' + month + '/' + year;
+	const formattedDate = year + '/' + month + '/' + day;
 	return formattedDate;
 }

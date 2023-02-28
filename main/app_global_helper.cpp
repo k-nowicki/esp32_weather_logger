@@ -247,7 +247,8 @@ void ensure_card_works(void){
 
 /**
  * @param path Path to directory to search
- * @return  pointer to string containing newest filename
+ * @return  pointer to string containing newest filename.
+ *          If dir is empty, return 000.jpg filename.
  */
 char *get_newest_file(char *path) {
   const char *TAG = "GET_NEWFILE";
@@ -256,15 +257,18 @@ char *get_newest_file(char *path) {
   struct stat st;
   time_t newest = 0;
   char *newest_file = NULL;
+  char newest_yet[MAXNAMLEN+1];
+  char filename[PATH_MAX];
+
+  strcpy(newest_yet, "000.jpg");  //if dir is empty assume that 000.jpg file is found
 
   dir = opendir(path);
   if (dir == NULL) {
     ESP_LOGE(TAG, "Cannot open DIR!");
     return NULL;
   }
-
   while ((ent = readdir(dir)) != NULL) {
-    char filename[PATH_MAX];
+
     snprintf(filename, PATH_MAX, "%s/%s", path, ent->d_name);
 
     if (stat(filename, &st) == -1) {
@@ -274,13 +278,25 @@ char *get_newest_file(char *path) {
 
     if (S_ISREG(st.st_mode) && st.st_mtime > newest) {
       newest = st.st_mtime;
-      if (newest_file != NULL) { free(newest_file); }
-      newest_file = strdup(ent->d_name);
+      strcpy(newest_yet, ent->d_name);  //  strdup is too slow
     }
   }
   closedir(dir);
+  newest_file = strdup(newest_yet);
   ESP_LOGE(TAG, "Newest file found: %s", newest_file);
   return newest_file;
+}
+
+void get_today_path(char *path_buf){
+  time_t now = 0;
+  struct tm timeinfo;
+
+  //fetch localtime
+  now = time(NULL);
+  localtime_r(&now, &timeinfo);
+
+  //create path
+  sprintf(path_buf, "/%04d/%02d/%02d", (timeinfo.tm_year+1900), timeinfo.tm_mon+1, timeinfo.tm_mday );
 }
 
 /*******************************************************************************

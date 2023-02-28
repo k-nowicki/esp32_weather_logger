@@ -93,6 +93,7 @@ uint8_t init_sd(void);
 uint8_t reinit_sd(void);
 void ensure_card_works(void);
 char *get_newest_file(char *);
+void get_today_path(char *path_buf);
 /*******************************************************************************
  * App Definitions
  * WARNING
