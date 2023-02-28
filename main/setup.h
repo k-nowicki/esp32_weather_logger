@@ -111,5 +111,5 @@
 #define PICTURE_INTERVAL_M 5          //number of minutes between pictures
 #define FILENAME_LEN 25           //Length of camera picture filename NNN_DDMMYYY.jpg
 #define FILEPATH_LEN_MAX 40       //Maximum length of full path to picture (for buffer allocation- keep it short, but not shorter than necessary)
-#define PIC_LIST_BUFFER_SIZE  (1440/PICTURE_INTERVAL_M)*(2*FILENAME_LEN+24) +55 //(MINUTES_IN_DAY/PICTURE_INTERVAL_M)*(2*FILENAME_LEN + IL_TEXT_LEN) + HTML_WRAP_TEXT_LEN
+#define PIC_LIST_BUFFER_SIZE  (1500/PICTURE_INTERVAL_M)*(2*FILENAME_LEN+28) +55 //(MINUTES_IN_DAY/PICTURE_INTERVAL_M)*(2*FILENAME_LEN + IL_TEXT_LEN) + HTML_WRAP_TEXT_LEN
 #endif /* MAIN_SETUP_H_ */

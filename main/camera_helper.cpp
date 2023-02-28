@@ -63,12 +63,13 @@ esp_err_t init_camera(int framesize){
 
 esp_err_t camera_capture(char * FileName, size_t *pictureSize){
   FILE* f;
-  //clear internal queue
-  for(int i=0;i<1;i++) {
-    camera_fb_t * fb = esp_camera_fb_get();
-    ESP_LOGI(TAG, "fb->len=%d", fb->len);
-    esp_camera_fb_return(fb);
-  }
+
+  //clear internal queue  - Not sure what purpose it has, but it basically takes one more photo for nothing
+//  for(int i=0;i<1;i++) {
+//    camera_fb_t * fb = esp_camera_fb_get();
+//    ESP_LOGI(TAG, "fb->len=%d", fb->len);
+//    esp_camera_fb_return(fb);
+//  }
 
   //acquire a frame
   camera_fb_t * fb = esp_camera_fb_get();
