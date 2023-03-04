@@ -55,10 +55,17 @@ void setup_httpd(void){
  *      ESP_FAIL if any other problem with starting server
  */
 httpd_handle_t start_webserver(const char *base_path){
-  httpd_handle_t server = NULL;
-  httpd_ssl_config_t conf = HTTPD_SSL_CONFIG_DEFAULT();
 
+#ifdef CONFIG_KK_USE_HTTP_SSL
+  httpd_ssl_config_t conf = HTTPD_SSL_CONFIG_DEFAULT();
   conf.httpd.task_priority = HTTP_TASK_PRIO;
+#else
+  httpd_config_t conf = HTTPD_DEFAULT_CONFIG();
+  conf.task_priority = HTTP_TASK_PRIO;
+#endif // CONFIG_KK_USE_HTTP_SSL
+
+  httpd_handle_t server = NULL;
+
   static struct file_server_data *server_data = NULL;
 
   if (server_data) {
@@ -77,6 +84,7 @@ httpd_handle_t start_webserver(const char *base_path){
 
   // Start the httpd server
   ESP_LOGI(TAG, "Starting server");
+#ifdef CONFIG_KK_USE_HTTP_SSL
   extern const unsigned char cacert_pem_start[] asm("_binary_cacert_pem_start");
   extern const unsigned char cacert_pem_end[]   asm("_binary_cacert_pem_end");
   conf.cacert_pem = cacert_pem_start;
@@ -89,8 +97,11 @@ httpd_handle_t start_webserver(const char *base_path){
 
 #if CONFIG_KK_ENABLE_HTTPS_USER_CALLBACK
   conf.user_cb = https_server_user_callback;
-#endif
+#endif  // CONFIG_KK_ENABLE_HTTPS_USER_CALLBACK
+#endif  // CONFIG_KK_USE_HTTP_SSL
 
+
+#ifdef CONFIG_KK_USE_HTTP_SSL
   /* Use the URI wildcard matching function in order to
    * allow the same handler to respond to multiple different
    * target URIs which match the wildcard scheme */
@@ -101,6 +112,18 @@ httpd_handle_t start_webserver(const char *base_path){
     ESP_LOGI(TAG, "Error starting server!");
     return (httpd_handle_t)ESP_FAIL;
   }
+#else // NOT CONFIG_KK_USE_HTTP_SSL
+  /* Use the URI wildcard matching function in order to
+   * allow the same handler to respond to multiple different
+   * target URIs which match the wildcard scheme */
+  conf.uri_match_fn = httpd_uri_match_wildcard;
+
+  esp_err_t ret = httpd_start(&server, &conf);
+  if (ESP_OK != ret) {
+    ESP_LOGI(TAG, "Error starting server!");
+    return (httpd_handle_t)ESP_FAIL;
+  }
+#endif // CONFIG_KK_USE_HTTP_SSL
 
   // Set URI handlers
   ESP_LOGI(TAG, "Registering URI handlers");

@@ -109,6 +109,7 @@ void app_main(void){
   //Allow other core to finish initialization
   vTaskDelay(pdMS_TO_TICKS(10));
 
+  //Setup Camera
   if(init_camera(FRAMESIZE) != ESP_OK){
     ESP_LOGE(TAG, "Camera initialization failed!");
     for(;;); // Don't proceed, loop forever
@@ -124,7 +125,6 @@ void app_main(void){
   if(!g_display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
     g_display.display();
     ESP_LOGE(TAG, "SSD1306 allocation failed");
-//    for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "SSD1306 OLED Display initialized.");
     init_app_screen();
@@ -152,7 +152,7 @@ void app_main(void){
   //BMP280 Initialization
   if(!g_pressureMeter.begin(BMP280_ADDR)){
     ESP_LOGE(TAG, "BMP280 initialization failed!");
-    for(;;); // Don't proceed, loop forever
+//    for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "BMP280 Pressure meter initialized.");
   }

@@ -21,8 +21,8 @@ var wind     = 0;
 var timestamp = 0;
 
 //Every 5sek get measurements
-setInterval(function () { GetMeasurements() ; }, 1000);
-setInterval(function () { updateImage() ; }, 5000);
+setInterval(function () { GetMeasurements() ; }, 5000);
+setInterval(function () { updateImage() ; }, 10000);
 
 
 function DoCommand(command, targetElement, value) {

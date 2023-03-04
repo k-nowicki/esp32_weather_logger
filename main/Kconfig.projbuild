@@ -58,6 +58,22 @@ endmenu
 
 menu "KK HTTP Configuration"
 
+    config KK_USE_HTTP_SSL
+        bool "Enable HTTPS server"
+        default n
+        help
+            HTTP Server will accept only https connections on port 443
+
+    if KK_USE_HTTP_SSL
+	    config KK_ENABLE_HTTPS_USER_CALLBACK
+	        bool "Enable user callback with HTTPS Server"
+            depends on KK_USE_HTTP_SSL
+	        select ESP_TLS_SERVER_MIN_AUTH_MODE_OPTIONAL
+	        help
+	            Enable user callback for esp_https_server which can be used to get SSL context (connection information)
+	            E.g. Certificate of the connected client
+	endif #KK_USE_HTTP_SSL
+	
     config KK_BASIC_AUTH
         bool "Basic Authentication"
         default n
@@ -83,13 +99,6 @@ menu "KK HTTP Configuration"
         default "ESP32Webserver"
         help
             The client's password which used for basic authenticate.
-            
-    config KK_ENABLE_HTTPS_USER_CALLBACK
-        bool "Enable user callback with HTTPS Server"
-        select ESP_TLS_SERVER_MIN_AUTH_MODE_OPTIONAL
-        help
-            Enable user callback for esp_https_server which can be used to get SSL context (connection information)
-            E.g. Certificate of the connected client
             
     config KK_HTTPD_CONN_CLOSE_HEADER
         bool "Send connection close header from request handlers"
