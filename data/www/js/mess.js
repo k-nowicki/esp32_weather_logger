@@ -22,7 +22,7 @@ var timestamp = 0;
 
 //Every 5sek get measurements
 setInterval(function () { GetMeasurements() ; }, 5000);
-setInterval(function () { updateImage() ; }, 10000);
+setInterval(function () { updateImage() ; }, 4999);
 
 
 function DoCommand(command, targetElement, value) {

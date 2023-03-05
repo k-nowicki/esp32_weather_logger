@@ -84,18 +84,28 @@ void vCameraTask(void*){
     //first set filename to current.jpg
     sprintf(pic_filename, "%s/%s", CAM_FILE_PATH, "/0/current.jpg" );
 
+
+
     //if it is time to permanently save picture - determine the filename
     if(is_time_to_get_picture() == true){
-      ESP_LOGI(TAG, "Time to take picture!!");
-      filename = get_next_file_full_path((char *)CAM_FILE_PATH);  //warning- this allocates memory that needs to be freed
-      if(filename != NULL){
-        strcpy(pic_filename, filename );
-        free(filename);
-        ESP_LOGI(TAG, "Successfully created Filename: %s", pic_filename);
+      //Do not save pictures if it is completely dark
+      measurement measurements;
+      measurements = get_latest_measurements();
+      if(measurements.lux < 0.5){
+        ESP_LOGI(TAG, "Too dark for saving picture!");
       }else{
-        ESP_LOGE(TAG, "Can not get new filename!");
+        ESP_LOGI(TAG, "Time to take picture!!");
+        filename = get_next_file_full_path((char *)CAM_FILE_PATH);  //warning- this allocates memory that needs to be freed
+        if(filename != NULL){
+          strcpy(pic_filename, filename );
+          free(filename);
+          ESP_LOGI(TAG, "Successfully created Filename: %s", pic_filename);
+        }else{
+          ESP_LOGE(TAG, "Can not get new filename!");
+        }
       }
     }
+
 
     ESP_LOGI(TAG, "Taking picture!");
     if(camera_capture(pic_filename, &pictureSize) != ESP_OK){

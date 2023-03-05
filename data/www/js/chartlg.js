@@ -7,7 +7,7 @@ var chart4;
 const a_day = 1000*60*60*24;
 
 if(window.location.pathname.includes("/home") || window.location.pathname.includes("C:")){
-  var myIPaddress = "https://192.168.0.20/";
+  var myIPaddress = "http://192.168.0.20/";
 }
 else{
   var myIPaddress = "/";
