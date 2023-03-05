@@ -82,16 +82,16 @@
  *  System Setup
  */
 
-#define STATS_TASK_PRIO     11
-#define DISPLAY_TASK_PRIO   13
-#define CAM_TASK_PRIO       10
-#define SENSORS_TASK_PRIO   15
-#define DHT11_TASK_PRIO     16
-#define RTC_TASK_PRIO       17
+#define CAM_TASK_PRIO       20
 #define SDAVGLG_TASK_PRIO   18
-#define SDCSVLG_TASK_PRIO   19
-#define SDJSLG_TASK_PRIO    19
-#define HTTP_TASK_PRIO     DISPLAY_TASK_PRIO
+#define SDCSVLG_TASK_PRIO   18
+#define SDJSLG_TASK_PRIO    18
+#define DISPLAY_TASK_PRIO   15
+#define HTTP_TASK_PRIO      DISPLAY_TASK_PRIO
+#define SENSORS_TASK_PRIO   13
+#define DHT11_TASK_PRIO     12
+#define RTC_TASK_PRIO       10
+#define STATS_TASK_PRIO     9
 
 #define STATS_TICKS         pdMS_TO_TICKS(10*1000)
 #define ARRAY_SIZE_OFFSET   5   //Increase this if print_real_time_stats returns ESP_ERR_INVALID_SIZE

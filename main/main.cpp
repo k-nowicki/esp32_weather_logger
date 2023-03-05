@@ -91,9 +91,15 @@ SemaphoreHandle_t g_uart_mutex;
 SemaphoreHandle_t g_card_mutex;
 
 //task handlers
+TaskHandle_t g_vRTCTaskHandle = NULL;
+TaskHandle_t g_vDHT11TaskHandle = NULL;
+TaskHandle_t g_vSensorsTaskHandle = NULL;
+TaskHandle_t g_vDisplayTaskHandle = NULL;
+TaskHandle_t g_vCameraTaskHandle = NULL;
 TaskHandle_t g_vSDCSVLGTaskHandle = NULL;
 TaskHandle_t g_vSDAVGLGTaskHandle = NULL;
 TaskHandle_t g_vSDJSLGTaskHandle = NULL;
+TaskHandle_t g_vStatsTaskHandle = NULL;
 
 /*******************************************************************************
  *  App Main
@@ -184,17 +190,18 @@ void app_main(void){
   //initialize_ds18b20();
 
   //Create business tasks:
-  xTaskCreatePinnedToCore( vRTCTask, "RTC", 3096, NULL, RTC_TASK_PRIO, NULL, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, NULL, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, NULL, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vCameraTask, "CAM", 4*1024, NULL, CAM_TASK_PRIO, NULL, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vRTCTask, "RTC", 3096, NULL, RTC_TASK_PRIO, &g_vRTCTaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, &g_vDHT11TaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, &g_vSensorsTaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, &g_vDisplayTaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vCameraTask, "CAM", 4*1024, NULL, CAM_TASK_PRIO, &g_vCameraTaskHandle, tskNO_AFFINITY );
   //Loggers
   xTaskCreatePinnedToCore( vSDCSVLGTask, "SDCSVLG", 6*1024, NULL, SDCSVLG_TASK_PRIO, &g_vSDCSVLGTaskHandle, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vSDJSLGTask, "SDJSLG", 6*1024, NULL, SDJSLG_TASK_PRIO, &g_vSDJSLGTaskHandle, tskNO_AFFINITY );
+//  xTaskCreatePinnedToCore( vSDJSLGTask, "SDJSLG", 6*1024, NULL, SDJSLG_TASK_PRIO, &g_vSDJSLGTaskHandle, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSDAVGLGTask, "SDAVGLG", 6*1024, NULL, SDAVGLG_TASK_PRIO, &g_vSDAVGLGTaskHandle, tskNO_AFFINITY );
   //Create and start stats task
-  xTaskCreatePinnedToCore(vStatsTask, "STATS", 2048, NULL, STATS_TASK_PRIO, NULL, tskNO_AFFINITY);
+  xTaskCreatePinnedToCore(vStatsTask, "STATS", 2048, NULL, STATS_TASK_PRIO, &g_vStatsTaskHandle, tskNO_AFFINITY);
+
 }
 
 

@@ -15,12 +15,18 @@
  *
  */
 
+#include "esp_wifi.h"
+#include "esp_task_wdt.h"
 #include <time.h>
 #include <app.h>
+
 //#ifdef B1000000   //arduino libs loaded in app.h defines those marcos in different way than esp-idf does
 //#undef B1000000
 //#undef B110
 //#endif
+
+
+#include "tasks/tasks.h"
 #include "kk_http_app.h"
 #include "kk_http_server_setup.h"
 
@@ -180,8 +186,6 @@ esp_err_t set_post_handler(httpd_req_t *req){
 //  req->uri
   if(strncmp(req->uri, "/set/reset", 10) == 0){
     return reset_send_confirmation(req);
-//  }else if(strncmp(req->uri + strlen((char*)req->user_ctx), "current_ms.json", 25) == 0){
-//    return send_current_ms(req);
   }else{
     ESP_LOGE(TAG, "Failed to recognize path: %s", req->uri);
     /* Respond with 404 Not Found */
@@ -286,11 +290,26 @@ esp_err_t reset_send_confirmation(httpd_req_t *req){
   httpd_resp_set_status(req, "203 Reset Content");
   strcpy((char*)req->uri, "/reset.htm");    //change uri to match real file
   file_get_handler(req);            //send reset.htm page
-  vTaskDelay(pdMS_TO_TICKS(3000));  //wait for response to be physically sent
+  vTaskDelay(pdMS_TO_TICKS(1000));  //wait for response to be physically sent
   ESP_LOGW(TAG, "Performing system restart...");
-  ///TODO: something sometimes blocks esp_reset function and http server stops here forever
-  esp_restart();                    //perform software restart
-  ESP_LOGW(TAG, "This message should never print.");
+  //Disable Camera and logger tasks as those are using SD file system
+  //if's are needed to check handles, as vTaskSuspend(NULL) will suspend current task
+  if(g_vCameraTaskHandle) vTaskSuspend(g_vCameraTaskHandle);
+  if(g_vSDCSVLGTaskHandle) vTaskSuspend(g_vSDCSVLGTaskHandle);
+  if(g_vSDAVGLGTaskHandle) vTaskSuspend(g_vSDAVGLGTaskHandle);
+  if(g_vSDJSLGTaskHandle) vTaskSuspend(g_vSDJSLGTaskHandle);
+  //Unmount SD File system (for SD Card safety)
+  unmount_sd();
+  //disable WiFi and Server (by callback)
+  esp_wifi_stop();
+  //system restart below just don't work as expected and hangs on wifi deinitialization (regardless of idf version)
+  ESP_LOGW(TAG, "Performing WDT RESET in 1s...");
+  esp_task_wdt_init(1, true); //So we just perform watchdog reset
+  esp_task_wdt_add(NULL);
+  while(1);
+
+//  ESP.restart();                    //perform software restart
+//  ESP_LOGW(TAG, "This message should never print.");
 //  for(;;) vTaskDelay(pdMS_TO_TICKS(1000));  //wait forever
   return ESP_OK;
 }

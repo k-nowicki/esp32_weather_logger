@@ -12,6 +12,17 @@
 #include "../setup.h"
 #include "../app.h"
 
+//task handlers
+extern TaskHandle_t g_vRTCTaskHandle;
+extern TaskHandle_t g_vDHT11TaskHandle;
+extern TaskHandle_t g_vSensorsTaskHandle;
+extern TaskHandle_t g_vDisplayTaskHandle;
+extern TaskHandle_t g_vCameraTaskHandle;
+extern TaskHandle_t g_vSDCSVLGTaskHandle;
+extern TaskHandle_t g_vSDAVGLGTaskHandle;
+extern TaskHandle_t g_vSDJSLGTaskHandle;
+extern TaskHandle_t g_vStatsTaskHandle;
+
 //Tasks declarations
 void vSensorsTask(void*);
 void vDHT11Task(void*);

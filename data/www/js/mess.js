@@ -1,7 +1,7 @@
 // Use ip address under development
 // Use "/" string when using from controller web site
 if(window.location.pathname.includes("/home") || window.location.pathname.includes("C:")){
-  var myIPaddress = "https://192.168.0.20/";
+  var myIPaddress = "http://192.168.0.20/";
 }
 else{
   var myIPaddress = "/";
@@ -29,7 +29,7 @@ function DoCommand(command, targetElement, value) {
   var xmlhttp;
   var path;
   var type;
-  type = (targetElement == "reset") ? ".html" : ".json";
+  type = (targetElement == "reset") ? ".htm" : ".json";
   if (window.XMLHttpRequest) {xmlhttp = new XMLHttpRequest();}
   else {xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");}
   xmlhttp.onreadystatechange = function () {

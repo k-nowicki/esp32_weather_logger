@@ -42,7 +42,7 @@ static const char *TAG = "cam_hal";
 static cam_obj_t *cam_obj = NULL;
 
 static const uint32_t JPEG_SOI_MARKER = 0xFFD8FF;  // written in little-endian for esp32
-static const uint16_t JPEG_EOI_MARKER = 0xD9FF;  // written in little-endian for esp32
+static const uint16_t JPEG_EOI_MARKER = 0xD9FF;    // written in little-endian for esp32
 
 static int cam_verify_jpeg_soi(const uint8_t *inbuf, uint32_t length)
 {
@@ -373,7 +373,7 @@ esp_err_t cam_config(const camera_config_t *config, framesize_t frame_size, uint
     cam_obj->height = resolution[frame_size].height;
 
     if(cam_obj->jpeg_mode){
-        cam_obj->recv_size = cam_obj->width * cam_obj->height / 5;
+        cam_obj->recv_size = cam_obj->width * cam_obj->height / 4;
         cam_obj->fb_size = cam_obj->recv_size;
     } else {
         cam_obj->recv_size = cam_obj->width * cam_obj->height * cam_obj->in_bytes_per_pixel;
