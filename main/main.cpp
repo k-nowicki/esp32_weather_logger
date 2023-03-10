@@ -148,33 +148,36 @@ void app_main(void){
 
 
   //BH1750 Initialization
-
   if(!g_lightMeter.begin(BH1750::Mode::CONTINUOUS_HIGH_RES_MODE, BH1750_ADDR, &Wire1)){
     ESP_LOGE(TAG, "BH1750 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "BH1750 Light meter initialized.");
   }
+
   //BMP280 Initialization
   if(!g_pressureMeter.begin(BMP280_ADDR)){
     ESP_LOGE(TAG, "BMP280 initialization failed!");
-//    for(;;); // Don't proceed, loop forever
+    //for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "BMP280 Pressure meter initialized.");
   }
 
+  //RTC Initialization
   if(!g_rtc.begin(&Wire1)){
-
     ESP_LOGE(TAG, "RTC DS3231 initialization failed!");
     for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "DS3231 Real Time Clock initialized.");
   }
+
+  //SD Card initialization
   if(init_sd() != ESP_OK){
     ESP_LOGE(TAG, "Cannot initialize SD Card!");
     for(;;); // Don't proceed, loop forever
   }
 
+  //WiFi Initialization
   ESP_LOGI(TAG, "Initializing NVS flash...");
   ESP_ERROR_CHECK( nvs_flash_init() );
   ESP_LOGI(TAG, "Initializing network interface...");
@@ -184,7 +187,6 @@ void app_main(void){
   setup_httpd();
   ESP_LOGI(TAG, "Connecting to WiFi network...");
   ESP_ERROR_CHECK(network_connect());
-
 
   //DS18B20 Initialization
   //initialize_ds18b20();

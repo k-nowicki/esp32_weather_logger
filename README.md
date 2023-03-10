@@ -85,3 +85,6 @@ As a weather station the device needs to be directly exposed to weather conditio
 I designed enclosure for 3d printing. Files in stl format can be found in extras/case.
 Enclosure is designed with 25,4mm x 76,2mm glass window that utilizes standard 1x3 inch microscope slides. 
 The best slides are one side matted which works as diffuser for light sensor.
+
+## Web Interface
+<img src="extras/pics/index_page.png" height="1241"/> <img src="extras/pics/history_page.png" height="1241"/> 
