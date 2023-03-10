@@ -31,15 +31,15 @@ camera_config_t camera_config = {
   .pin_pclk = CAM_PIN_PCLK,
 
   //XCLK 20MHz or 10MHz for OV2640 double FPS (Experimental)
-  .xclk_freq_hz = 10000000,
+  .xclk_freq_hz = 20000000,
   .ledc_timer = LEDC_TIMER_0,
   .ledc_channel = LEDC_CHANNEL_0,
 
   .pixel_format = PIXFORMAT_JPEG, //YUV422,GRAYSCALE,RGB565,JPEG
-  .frame_size = FRAMESIZE_VGA, //QQVGA-UXGA Do not use sizes above QVGA when not JPEG
+  .frame_size = FRAMESIZE_SXGA, //QQVGA-UXGA Do not use sizes above QVGA when not JPEG
 
-  .jpeg_quality = 4, //0-63 lower number means higher quality
-  .fb_count = 1, //if more than one, i2s runs in continuous mode. Use only with JPEG
+  .jpeg_quality = 8, //0-63 lower number means higher quality
+  .fb_count = 3, //if more than one, i2s runs in continuous mode. Use only with JPEG
 
   .fb_location = CAMERA_FB_IN_PSRAM,
   .grab_mode = CAMERA_GRAB_LATEST //CAMERA_GRAB_WHEN_EMPTY //
@@ -65,10 +65,10 @@ esp_err_t camera_capture(char * FileName, size_t *pictureSize){
   FILE* f;
 
   //clear internal queue  - Not sure what purpose it has, but it basically takes one more photo for nothing
-//  for(int i=0;i<1;i++) {
-//    camera_fb_t * fb = esp_camera_fb_get();
-//    ESP_LOGI(TAG, "fb->len=%d", fb->len);
-//    esp_camera_fb_return(fb);
+//  camera_fb_t * fb = esp_camera_fb_get();
+//  if(fb){
+//      //ESP_LOGI(TAG, "fb->len=%d", fb->len);
+//      esp_camera_fb_return(fb);
 //  }
 
   //acquire a frame

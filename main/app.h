@@ -105,7 +105,7 @@ void get_today_path(char *path_buf);
 #define AVG_LOGGER_NOTIFY_ARRAY_INDEX 0
 #define JS_LOGGER_NOTIFY_ARRAY_INDEX 0
 #define LOGGER_NOTIFY_VALUE 1
-
+#define CAMERA_TASK_NOTIFY_ARRAY_INDEX 0
 #endif /* MAIN_APP_H_ */
 
 

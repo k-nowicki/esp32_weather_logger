@@ -283,7 +283,7 @@ char *get_newest_file(char *path) {
   }
   closedir(dir);
   newest_file = strdup(newest_yet);
-  ESP_LOGE(TAG, "Newest file found: %s", newest_file);
+  ESP_LOGI(TAG, "Newest file found: %s", newest_file);
   return newest_file;
 }
 

@@ -114,6 +114,12 @@ void vRTCTask(void*){
   }else{
       ESP_LOGE(TAG, "vSDAVGLGTaskHandle is NULL pointer!");
   }
+  //send notify to CAM task that time is synchronized
+  if(g_vCameraTaskHandle != NULL){
+      xTaskNotifyIndexed( g_vCameraTaskHandle, CAMERA_TASK_NOTIFY_ARRAY_INDEX , LOGGER_NOTIFY_VALUE, eSetValueWithOverwrite );
+  }else{
+      ESP_LOGE(TAG, "g_vCameraTaskHandle is NULL pointer!");
+  }
 
   ESP_LOGI(TAG, "RTC Clocks updated with NTP.");
   while (1) {

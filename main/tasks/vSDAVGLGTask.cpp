@@ -94,7 +94,7 @@ void vSDAVGLGTask(void*){
   //Wait until RTC sends notify that is synchronized with external RTC
   ulTaskNotifyTakeIndexed( AVG_LOGGER_NOTIFY_ARRAY_INDEX, pdTRUE, portMAX_DELAY );
   //for desynchronize RTCTask logs with this task logs to not interfere each other
-  vTaskDelay(pdMS_TO_TICKS(450));
+  vTaskDelay(pdMS_TO_TICKS(200));
 
   xLastWakeTime = xTaskGetTickCount();   //https://www.freertos.org/xtaskdelayuntiltask-control.html
   //Log file must be todays log file

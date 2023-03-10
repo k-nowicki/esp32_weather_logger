@@ -69,7 +69,10 @@ void vCameraTask(void*){
   char *filename = NULL;
   char pic_filename[FILEPATH_LEN_MAX];
 
-  vTaskDelay(pdMS_TO_TICKS(10000));  //wait 10 secs (rtc update, logs initialization etc)
+  //Wait until RTC sends notify that is synchronized with external RTC
+  ulTaskNotifyTakeIndexed( CAMERA_TASK_NOTIFY_ARRAY_INDEX, pdTRUE, portMAX_DELAY );
+  //for desynchronize RTCTask logs with this task logs to not interfere each other
+  vTaskDelay(pdMS_TO_TICKS(250));
 
   xLastWakeTime = xTaskGetTickCount();   //https://www.freertos.org/xtaskdelayuntiltask-control.html
   while (1) {
@@ -81,10 +84,8 @@ void vCameraTask(void*){
      *   - the loop ends
      */
 
-    //first set filename to current.jpg
+    //set filename to current.jpg
     sprintf(pic_filename, "%s/%s", CAM_FILE_PATH, "/0/current.jpg" );
-
-
 
     //if it is time to permanently save picture - determine the filename
     if(is_time_to_get_picture() == true){
@@ -109,9 +110,10 @@ void vCameraTask(void*){
 
     ESP_LOGI(TAG, "Taking picture!");
     if(camera_capture(pic_filename, &pictureSize) != ESP_OK){
-        ESP_LOGE(TAG, "Can not take picture!");
+      ESP_LOGE(TAG, "Can not take picture!");
+    }else{
+      ESP_LOGI(TAG, "Picture stored on SD Card!");
     }
-    ESP_LOGI(TAG, "Picture stored on SD Card!");
     // Wait for the next cycle exactly 1 second.
     xTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(5000) );
   }
@@ -194,7 +196,7 @@ static void ensure_todays_path_exist(char *path){
   sprintf(pic_filename, "%s/%04d", path, (timeinfo.tm_year+1900) );
   res = mkdir(pic_filename, 0777);
   if(res != FR_OK && res != FR_EXIST){
-    ESP_LOGE(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
+    ESP_LOGW(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
   }else{
     ESP_LOGI(TAG, "Directory '%s' created successfully!", pic_filename);
   }
@@ -204,7 +206,7 @@ static void ensure_todays_path_exist(char *path){
   sprintf(path_end_ptr, "/%02d", timeinfo.tm_mon+1 );
   res = mkdir(pic_filename, 0777);
   if(res != FR_OK && res != FR_EXIST){
-    ESP_LOGE(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
+    ESP_LOGW(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
   }else{
     ESP_LOGI(TAG, "Directory '%s' created successfully!", pic_filename);
   }
@@ -214,7 +216,7 @@ static void ensure_todays_path_exist(char *path){
   sprintf(path_end_ptr, "/%02d", timeinfo.tm_mday );
   res = mkdir(pic_filename, 0777);
   if(res != FR_OK && res != FR_EXIST){
-    ESP_LOGE(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
+    ESP_LOGW(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
   }else{
     ESP_LOGI(TAG, "Directory '%s' created successfully!", pic_filename);
   }

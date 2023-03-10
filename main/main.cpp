@@ -194,7 +194,7 @@ void app_main(void){
   xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, &g_vDHT11TaskHandle, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, &g_vSensorsTaskHandle, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, &g_vDisplayTaskHandle, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vCameraTask, "CAM", 4*1024, NULL, CAM_TASK_PRIO, &g_vCameraTaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vCameraTask, "CAM", 48*1024, NULL, CAM_TASK_PRIO, &g_vCameraTaskHandle, tskNO_AFFINITY );
   //Loggers
   xTaskCreatePinnedToCore( vSDCSVLGTask, "SDCSVLG", 6*1024, NULL, SDCSVLG_TASK_PRIO, &g_vSDCSVLGTaskHandle, tskNO_AFFINITY );
 //  xTaskCreatePinnedToCore( vSDJSLGTask, "SDJSLG", 6*1024, NULL, SDJSLG_TASK_PRIO, &g_vSDJSLGTaskHandle, tskNO_AFFINITY );
