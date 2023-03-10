@@ -5,6 +5,9 @@ All user interactions are made by web interface. Besides display and on/off swit
 The purpose of the device is to deliver historical weather informations along with pictures of those conditions, for further analysis.
 Device can be used as weather conditions logger, time-lapse camera or just home weather station.
 
+<img src="extras/pics/DSC01369.jpg" height="340"/> <img src="extras/pics/DSC01370.jpg" height="340"/><img src="extras/pics/DSC01362.jpg" height="340"/> 
+
+
 ## Hardware
 
 |  Type | Name/Info  | Libs  |
