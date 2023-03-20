@@ -148,7 +148,7 @@ esp_err_t pic_get_handler(httpd_req_t *req){
   sprintf(path, "%s/%s", CAM_FILE_PATH, date);
   ESP_LOGI(TAG, "Generating list of pictures from path %s", path);
   generate_html_list(path, date, list_buf);
-  ESP_LOGE(TAG, "Zawartosc listy:\n %s", list_buf);
+  ESP_LOGI(TAG, "Zawartosc listy:\n %s", list_buf);
 
   httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
   httpd_resp_set_type(req, "text/html");

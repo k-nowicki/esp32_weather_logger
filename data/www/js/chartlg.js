@@ -4,10 +4,11 @@ var chart1;
 var chart2;
 var chart3;
 var chart4;
+var chart5;
 const a_day = 1000*60*60*24;
 
 if(window.location.pathname.includes("/home") || window.location.pathname.includes("C:")){
-  var myIPaddress = "http://192.168.0.20/";
+  var myIPaddress = "http://192.168.0.23/";
 }
 else{
   var myIPaddress = "/";
@@ -254,6 +255,50 @@ function instantiateCharts(){
     }]
   });
   
+  
+  chart5 = new CanvasJS.Chart("chartContainer5", {
+    theme: "light1", //, "light1", "light2", "dark1", "dark2"
+    animationEnabled: true,
+    animationDuration: 1500,
+    zoomEnabled: true,
+    title: {
+      text: "Wind [m/s]"
+    },
+    toolTip:{   
+      content: "{name}: {y}"      
+    },
+    axisX: {
+      valueFormatString: " DD-MM-YYYY  HH:mm:ss",
+      crosshair: {
+        enabled: true,
+        snapToDataPoint: true
+      }
+    },
+    axisY: {
+      title: "Wind speed (m/s)",
+      minimum: 0,
+      maximum: 200,
+      crosshair: {
+        enabled: true,
+        snapToDataPoint: true,
+        labelFormatter: function(e) {
+          return CanvasJS.formatNumber(e.value, "##0.000 m/s");
+        }
+      }
+    },
+    legend:{
+      cursor: "pointer",
+      fontSize: 16,
+      itemclick: toggleDataSeries
+    },
+    data: [{
+      name: "WindSpeed",
+      type: "splineArea",
+      xValueType: "dateTime",        
+      dataPoints: []
+    }]
+  });
+
 }
   
 
@@ -347,7 +392,7 @@ function FetchPicList(path){
   xmlhttp.open("GET", myIPaddress + path, true);
   xmlhttp.send();
 }
-
+var result;
 //fetch log from weather station
 function FetchCSVLog(log_fname){
   var xmlhttp, path;
@@ -362,6 +407,7 @@ function FetchCSVLog(log_fname){
 		chart2.render();
 		chart3.render();
 		chart4.render();
+		chart5.render();
 		removeLoader();
 		displaySuccess("Data loaded successfully!");
 		displayLogErrors();
@@ -394,6 +440,7 @@ function FetchJSLog(log_fname){
 		chart2.render();
 		chart3.render();
 		chart4.render();
+		chart5.render();
 		removeLoader();
 		displaySuccess("Data loaded successfully!");
 		displayLogErrors();
@@ -413,7 +460,7 @@ function addDataPoints(dataSet) {
   for(var i = 0; i < dataSet.length; i++) {
     timestamp = new Date(dataSet[i].time * 1000); //dataSet[i].timestamp * 1000;//
     timestamp.setHours(timestamp.getHours() - 2); //set as local time
-    if((dataSet[i].int_t)&&(timestamp.getFullYear() >= 2020)){  //display logged data only if this entry has valid date and timestamp is valid
+    if((dataSet[i].time)&&(timestamp.getFullYear() >= 2020)){  //display logged data only if this entry has valid date and timestamp is valid
       chart1.options.data[0].dataPoints.push({x: timestamp,y: dataSet[i].int_t});
       chart1.options.data[1].dataPoints.push({x: timestamp,y: dataSet[i].ext_t});
       
@@ -425,9 +472,11 @@ function addDataPoints(dataSet) {
       chart2.options.data[0].dataPoints.push({x: timestamp,y: dataSet[i].sun});
       
       chart3.options.data[0].dataPoints.push({x: timestamp,y: (dataSet[i].humi < 100 ? dataSet[i].humi : 0)});
-      chart4.options.data[0].dataPoints.push({x: timestamp,y: (dataSet[i].press >= 900 ? dataSet[i].press : 991)});
+      chart4.options.data[0].dataPoints.push({x: timestamp,y: ((dataSet[i].press >= 900) ? dataSet[i].press : 991)});
+      chart5.options.data[0].dataPoints.push({x: timestamp,y: (dataSet[i].wind < 0 ? 0 : dataSet[i].wind)});
     }
   }
+  result = chart1.options.data;
 }
 
 function cleanCharts(){

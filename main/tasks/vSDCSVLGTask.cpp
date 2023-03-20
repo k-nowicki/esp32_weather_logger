@@ -203,7 +203,7 @@ void rename_csvlg_file(tm * time){
 uint8_t begin_csvlg_file(const char * filename){
   FILE *f = fopen(filename, "w");
   if(f != NULL){
-    fprintf(f, "time,int_t,ext_t,humi,sun,press\n");
+    fprintf(f, "time,int_t,ext_t,humi,sun,press,wind\n");
     fclose(f);
     return ESP_OK;
   }else{
