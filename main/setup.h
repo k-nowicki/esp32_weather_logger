@@ -45,6 +45,7 @@
 //I2C Device addrs
 #define OLED_ADDR   0x3c
 #define BH1750_ADDR 0x23
+#define ANEMO_ADDR 0x56
 //#define DS3231_ADDR 0x57  // this address is defined inside DS3231 library
 #define BMP280_ADDR 0x76
 //OLED SCREEN

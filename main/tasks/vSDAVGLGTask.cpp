@@ -133,6 +133,7 @@ void vSDAVGLGTask(void*){
         measurements.iTemp += measurements_buf[i].iTemp;
         measurements.lux += measurements_buf[i].lux;
         measurements.pres += measurements_buf[i].pres;
+        measurements.wind += measurements_buf[i].wind;
         avg_time += measurements_buf[i].time;
       }
       //average all values by number measurements_count
@@ -141,6 +142,7 @@ void vSDAVGLGTask(void*){
       measurements.iTemp /= m_cnt;
       measurements.lux /= m_cnt;
       measurements.pres /= m_cnt;
+      measurements.wind /= m_cnt;
       measurements.time = avg_time/m_cnt;
 
       /**
@@ -153,13 +155,14 @@ void vSDAVGLGTask(void*){
         ensure_card_works();
       }else{
         //Prepare and store log entry
-        fprintf(f, "%lld,%3.2F,%3.2F,%d,%5.2F,%4.2f\n",
+        fprintf(f, "%lld,%3.2F,%3.2F,%d,%5.2F,%4.2f,%3.3f\n",
                       static_cast<long long>(measurements.time),
                       measurements.iTemp,
                       measurements.eTemp,
                       static_cast<int>(measurements.humi),
                       measurements.lux,
-                      measurements.pres);
+                      measurements.pres,
+                      measurements.wind);
         fclose(f);
         // reset helper variables
         m_cnt = 0; avg_time = 0;
@@ -168,6 +171,7 @@ void vSDAVGLGTask(void*){
         measurements.iTemp = 0;
         measurements.lux = 0;
         measurements.pres = 0;
+        measurements.wind = 0;
         measurements.time = 0;
       }
     }

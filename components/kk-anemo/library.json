@@ -1,0 +1,12 @@
+{
+  "name": "kk-anemo",
+  "keywords": "KK-ANEMO, anemometer, wind, sensor, Arduino, ESP8266, ESP32",
+  "description": "Arduino library for the digital anemometer sensor.",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "frameworks": "arduino",
+  "platforms": ["atmelavr", "atmelsam", "espressif8266", "espressif32", "stm32"],
+  "version": "1.1.0"
+}

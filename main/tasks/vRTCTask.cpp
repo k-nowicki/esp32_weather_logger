@@ -129,26 +129,39 @@ void vRTCTask(void*){
 
     //Compare both, update the one that is out or both
     if((year < 2022) && ((timeinfo.tm_year+1900) >= 2022)){   //Bad RTC Time, good local time
-        ESP_LOGW(TAG, "External RTC out! Updating from internal RTC.");
-        update_ext_rtc_from_int_rtc();
+      xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
+      ESP_LOGW(TAG, "External RTC out! Updating from internal RTC.");
+      xSemaphoreGive(g_uart_mutex);     //give back UART port
+      update_ext_rtc_from_int_rtc();
     }else if(((timeinfo.tm_year+1900) < 2022) && (year >= 2022)){ //Bad local, good RTC time
-        ESP_LOGW(TAG, "Internal RTC out! Updating from external RTC.");
-        update_int_rtc_from_ext_rtc();
+      xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
+      ESP_LOGW(TAG, "Internal RTC out! Updating from external RTC.");
+      xSemaphoreGive(g_uart_mutex);     //give back UART port
+      update_int_rtc_from_ext_rtc();
     }else if((year < 2022) && ((timeinfo.tm_year+1900) < 2022)){  //both out- trigger immediate NTP Update
+      xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
       ESP_LOGW(TAG, "Both RTCs out! Calling NTP Update!");
+      xSemaphoreGive(g_uart_mutex);     //give back UART port
       sntp_stop();
       sntp_init();
     }
 
     //Print out Time
     if (!g_rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday)) {
+      xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
       ESP_LOGE(TAG, "Get ext RTC time failed");
+      xSemaphoreGive(g_uart_mutex);     //give back UART port
     }else {
+      xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
       ESP_LOGI(TAG, "External RTC time: %d-%02d-%04d  %02d:%02d:%02d", mday, mon, year, hour, min, sec);
+      xSemaphoreGive(g_uart_mutex);     //give back UART port
     }
 
+    xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
     ESP_LOGI(TAG, "System RTC time: %d-%02d-%04d  %02d:%02d:%02d", timeinfo.tm_mday, timeinfo.tm_mon+1,
                    timeinfo.tm_year+1900, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+    xSemaphoreGive(g_uart_mutex);     //give back UART port
+
     vTaskDelay(pdMS_TO_TICKS(60000));  //wait a minute
   }
 }
@@ -167,10 +180,15 @@ void time_sync_notification_cb(struct timeval *tv){
   //update RTC
   now = time(NULL);
   localtime_r(&now, &timeinfo);
+
   if(g_rtc.write(&timeinfo)){
+    xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
     ESP_LOGI(TAG, "Local and external RTC updated.");
+    xSemaphoreGive(g_uart_mutex);     //give back UART port
   }else{
+    xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
     ESP_LOGE(TAG, "Local RTC sync done, external RTC reported error!");
+    xSemaphoreGive(g_uart_mutex);     //give back UART port
   }
 }
 

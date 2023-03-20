@@ -123,13 +123,14 @@ void vSDCSVLGTask(void*){
       //Prepare and store log entry
       now = time(NULL);
       measurements = get_latest_measurements();
-      fprintf(f, "%lld,%3.2F,%3.2F,%d,%5.2F,%4.2f\n",
+      fprintf(f, "%lld,%3.2F,%3.2F,%d,%5.2F,%4.2f,%3.3f\n",
                     static_cast<long long>(now),
                     measurements.iTemp,
                     measurements.eTemp,
                     static_cast<int>(measurements.humi),
                     measurements.lux,
-                    measurements.pres);
+                    measurements.pres,
+                    measurements.wind);
       fclose(f);
     }
 

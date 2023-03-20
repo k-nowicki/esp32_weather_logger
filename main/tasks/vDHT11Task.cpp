@@ -50,7 +50,8 @@
 
 
 /**
- * @brief Task responsible for reading DHT11 extremely slow sensor
+ * @brief Task responsible for reading DHT11 extremely slow sensor and reading
+ *        also slow wind speed from anemometer
  *
  * @param arg
  *
@@ -58,6 +59,10 @@
  * it also should not be read too often (most reads ends up with error then).
  * All other sensors are extremely fast in compare and can be read on the fly.
  * This is why reading of DHT11 is moved to separate task with different approach.
+ *
+ * The anemometer also needs around 1 second to make measurement, so it is
+ * placed here. This task probably should change name to vSlowSensTask or
+ * something like that.
  *
  */
 void vDHT11Task(void*){
@@ -73,11 +78,14 @@ void vDHT11Task(void*){
       tmp_measurements.eTemp = dht_read.temperature;
       tmp_measurements.humi = dht_read.humidity;
     }
+    //read also wind speed
+    tmp_measurements.wind = g_windMeter.readWind();
     //store measurements in curr_measures
     xSemaphoreTake(g_current_measuers_mutex, portMAX_DELAY);
     g_curr_measures.eTemp = tmp_measurements.eTemp;
     g_curr_measures.humi = tmp_measurements.humi;
     g_curr_measures.dht_status = tmp_measurements.dht_status;
+    g_curr_measures.wind = tmp_measurements.wind;
     xSemaphoreGive(g_current_measuers_mutex);
     vTaskDelay(pdMS_TO_TICKS(1000));
   }

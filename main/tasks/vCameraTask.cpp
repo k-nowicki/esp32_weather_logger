@@ -93,26 +93,39 @@ void vCameraTask(void*){
       measurement measurements;
       measurements = get_latest_measurements();
       if(measurements.lux < 0.5){
+        xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
         ESP_LOGI(TAG, "Too dark for saving picture!");
+        xSemaphoreGive(g_uart_mutex);     //give back UART port
       }else{
+        xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
         ESP_LOGI(TAG, "Time to take picture!!");
+        xSemaphoreGive(g_uart_mutex);     //give back UART port
         filename = get_next_file_full_path((char *)CAM_FILE_PATH);  //warning- this allocates memory that needs to be freed
         if(filename != NULL){
           strcpy(pic_filename, filename );
           free(filename);
+          xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
           ESP_LOGI(TAG, "Successfully created Filename: %s", pic_filename);
+          xSemaphoreGive(g_uart_mutex);     //give back UART port
         }else{
+          xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
           ESP_LOGE(TAG, "Can not get new filename!");
+          xSemaphoreGive(g_uart_mutex);     //give back UART port
         }
       }
     }
 
-
+    xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
     ESP_LOGI(TAG, "Taking picture!");
+    xSemaphoreGive(g_uart_mutex);     //give back UART port
     if(camera_capture(pic_filename, &pictureSize) != ESP_OK){
+      xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
       ESP_LOGE(TAG, "Can not take picture!");
+      xSemaphoreGive(g_uart_mutex);     //give back UART port
     }else{
+      xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
       ESP_LOGI(TAG, "Picture stored on SD Card!");
+      xSemaphoreGive(g_uart_mutex);     //give back UART port
     }
     // Wait for the next cycle exactly 1 second.
     xTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(5000) );
@@ -138,7 +151,9 @@ char *get_next_file_full_path(char *path) {
 
   char *next_file = (char *)malloc(60);
   if (next_file == NULL) {
+      xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
       ESP_LOGE(TAG, "Can not allocate memory!");
+      xSemaphoreGive(g_uart_mutex);     //give back UART port
       free(newest_file);
       return NULL;
   }
@@ -195,29 +210,39 @@ static void ensure_todays_path_exist(char *path){
   //create YYYY directory
   sprintf(pic_filename, "%s/%04d", path, (timeinfo.tm_year+1900) );
   res = mkdir(pic_filename, 0777);
+
+  xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
   if(res != FR_OK && res != FR_EXIST){
     ESP_LOGW(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
   }else{
     ESP_LOGI(TAG, "Directory '%s' created successfully!", pic_filename);
   }
+  xSemaphoreGive(g_uart_mutex);     //give back UART port
   path_end_ptr = path_start_ptr + strlen(pic_filename); //set end pointer to end of path
 
   //create MM directory
   sprintf(path_end_ptr, "/%02d", timeinfo.tm_mon+1 );
   res = mkdir(pic_filename, 0777);
+
+  xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
   if(res != FR_OK && res != FR_EXIST){
     ESP_LOGW(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
   }else{
     ESP_LOGI(TAG, "Directory '%s' created successfully!", pic_filename);
   }
+  xSemaphoreGive(g_uart_mutex);     //give back UART port
+
   path_end_ptr = path_start_ptr + strlen(pic_filename); //set pointer to end of path
 
   //create DD directory
   sprintf(path_end_ptr, "/%02d", timeinfo.tm_mday );
   res = mkdir(pic_filename, 0777);
+
+  xSemaphoreTake(g_uart_mutex, portMAX_DELAY);      //take UART port
   if(res != FR_OK && res != FR_EXIST){
     ESP_LOGW(TAG, "Can not create directory '%s'! Error: %d", pic_filename, res);
   }else{
     ESP_LOGI(TAG, "Directory '%s' created successfully!", pic_filename);
   }
+  xSemaphoreGive(g_uart_mutex);     //give back UART port
 }

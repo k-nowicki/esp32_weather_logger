@@ -25,6 +25,7 @@
 #include <Fonts/FreeSans9pt7b.h>
 #include <dht11.h>
 #include <BH1750.h>
+#include <kk-anemo.h>
 #include "esp_camera.h"
 #include "camera_pin.h"
 
@@ -51,6 +52,7 @@ struct measurement{
   float humi = 0.0;	//humidity (DHT11)
   float pres = 0.0;	//atm. pressure (BPM280)
   float alti = 0.0;	//altitude (BMP280, calculated)
+  float wind = 0.0; //wind speed in m/s
   int dht_status = 0; //dht last_measurement status
   time_t time = 0;  //time of measurement
 };
@@ -60,6 +62,7 @@ extern measurement g_curr_measures;	//Current measurements
 
 //Sensor global objects
 extern BH1750 g_lightMeter;
+extern ANEMO g_windMeter;
 extern Adafruit_BMP280 g_pressureMeter; // I2C
 extern Adafruit_SSD1306 g_display;
 

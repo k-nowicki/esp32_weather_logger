@@ -123,13 +123,14 @@ void vSDJSLGTask(void*){
       //Prepare and store log entry
       now = time(NULL);
       measurements = get_latest_measurements();
-      fprintf(f, "{\"time\":\"%lld\",\"int_t\":%3.2F, \"ext_t\":%3.2F, \"humi\":%d, \"sun\":%5.2F, \"press\":%4.2f},\n",
+      fprintf(f, "{\"time\":\"%lld\",\"int_t\":%3.2F, \"ext_t\":%3.2F, \"humi\":%d, \"sun\":%5.2F, \"press\":%4.2f, \"wind\":%3.3f},\n",
                     static_cast<long long>(now),
                     measurements.iTemp,
                     measurements.eTemp,
                     static_cast<int>(measurements.humi),
                     measurements.lux,
-                    measurements.pres);
+                    measurements.pres,
+                    measurements.wind);
       fclose(f);
     }
 

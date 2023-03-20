@@ -81,6 +81,7 @@ void vStatsTask(void *arg){
     printf("BMP Temperature:   %3.2F °C\n", tmp_measurements.iTemp);
     printf("BMP Atm. pressure: %4.2f hPa\n", tmp_measurements.pres);
     printf("BMP Altitude:      %5.2F m\n", tmp_measurements.alti);
+    printf("Wind Speed:        %2.3F m/s\n", tmp_measurements.wind);
     printf("=========================================\n\n");
     xSemaphoreGive(g_uart_mutex);     //give back UART port
   }
@@ -163,6 +164,7 @@ static esp_err_t print_real_time_stats(TickType_t xTicksToWait){
   printf("Real time stats over %d ticks\n", xTicksToWait);
   printf("-----------------------------------------\n");
   printf("| Task | Run Time | Percentage\n");
+  xSemaphoreGive(g_uart_mutex);
   //Match each task in start_array to those in the end_array
   for (int i = 0; i < start_array_size; i++) {
     int k = -1;
@@ -179,10 +181,12 @@ static esp_err_t print_real_time_stats(TickType_t xTicksToWait){
     if (k >= 0) {
       uint32_t task_elapsed_time = end_array[k].ulRunTimeCounter - start_array[i].ulRunTimeCounter;
       uint32_t percentage_time = (task_elapsed_time * 100UL) / (total_elapsed_time * portNUM_PROCESSORS);
+      xSemaphoreTake(g_uart_mutex, portMAX_DELAY);
       printf("| %s | %d | %d%%\n", start_array[i].pcTaskName, task_elapsed_time, percentage_time);
+      xSemaphoreGive(g_uart_mutex);
     }
   }
-
+  xSemaphoreTake(g_uart_mutex, portMAX_DELAY);
   //Print unmatched tasks
   for (int i = 0; i < start_array_size; i++) {
     if (start_array[i].xHandle != NULL) {

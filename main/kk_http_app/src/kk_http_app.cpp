@@ -243,13 +243,14 @@ esp_err_t send_current_measurements(httpd_req_t *req){
   char * respond_buf = (char*)malloc(512);
   now = time(NULL);
   measurements = get_latest_measurements();
-  sprintf(respond_buf, "{\"time\":\"%lld\",\"int_t\":%3.2F, \"ext_t\":%3.2F, \"humi\":%d, \"sun\":%5.2F, \"press\":%4.2f}\n",
+  sprintf(respond_buf, "{\"time\":\"%lld\",\"int_t\":%3.2F, \"ext_t\":%3.2F, \"humi\":%d, \"sun\":%5.2F, \"press\":%4.2f, \"wind\":%3.3f}\n",
                 (long long)(now),
                 measurements.iTemp,
                 measurements.eTemp,
                 (int)(measurements.humi),
                 measurements.lux,
-                measurements.pres);
+                measurements.pres,
+                measurements.wind/ 0.278);
 #ifdef CONFIG_KK_HTTPD_CONN_CLOSE_HEADER
   httpd_resp_set_hdr(req, "Connection", "close");
 #endif

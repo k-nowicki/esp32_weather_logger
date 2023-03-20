@@ -79,6 +79,7 @@ ErriezDS3231 g_rtc;
 
 //Sensor global objects
 BH1750 g_lightMeter(BH1750_ADDR);
+ANEMO g_windMeter(ANEMO_ADDR);
 Adafruit_BMP280 g_pressureMeter(&Wire1); // I2C
 Adafruit_SSD1306 g_display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, OLED_RESET);
 
@@ -110,6 +111,10 @@ void app_main(void){
   g_current_measuers_mutex = xSemaphoreCreateMutex();
   g_uart_mutex = xSemaphoreCreateMutex();
   g_card_mutex = xSemaphoreCreateMutex();
+  if(g_uart_mutex == NULL){
+      ESP_LOGE(TAG, "UART Mutex creation failed! Hold till reset!");
+      for(;;);
+  }
 
   //initArduino();
   //Allow other core to finish initialization
@@ -118,7 +123,7 @@ void app_main(void){
   //Setup Camera
   if(init_camera(FRAMESIZE) != ESP_OK){
     ESP_LOGE(TAG, "Camera initialization failed!");
-    for(;;); // Don't proceed, loop forever
+//    for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "Camera initialized.");
   }
@@ -153,6 +158,14 @@ void app_main(void){
     for(;;); // Don't proceed, loop forever
   }else{
     ESP_LOGI(TAG, "BH1750 Light meter initialized.");
+  }
+
+  //KK-ANEMO Initialization
+  if(!g_windMeter.begin(ANEMO_ADDR, &Wire1)){
+    ESP_LOGE(TAG, "ANEMOMETER initialization failed!");
+    for(;;); // Don't proceed, loop forever
+  }else{
+    ESP_LOGI(TAG, "ANEMOMETER initialized.");
   }
 
   //BMP280 Initialization
@@ -193,7 +206,7 @@ void app_main(void){
 
   //Create business tasks:
   xTaskCreatePinnedToCore( vRTCTask, "RTC", 3096, NULL, RTC_TASK_PRIO, &g_vRTCTaskHandle, tskNO_AFFINITY );
-  xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 1024, NULL, SENSORS_TASK_PRIO, &g_vDHT11TaskHandle, tskNO_AFFINITY );
+  xTaskCreatePinnedToCore( vDHT11Task, "DHT11", 2048, NULL, SENSORS_TASK_PRIO, &g_vDHT11TaskHandle, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSensorsTask, "SENS", 2048, NULL, SENSORS_TASK_PRIO, &g_vSensorsTaskHandle, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vDisplayTask, "OLED", 2048, NULL, DISPLAY_TASK_PRIO, &g_vDisplayTaskHandle, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vCameraTask, "CAM", 48*1024, NULL, CAM_TASK_PRIO, &g_vCameraTaskHandle, tskNO_AFFINITY );
@@ -202,7 +215,7 @@ void app_main(void){
 //  xTaskCreatePinnedToCore( vSDJSLGTask, "SDJSLG", 6*1024, NULL, SDJSLG_TASK_PRIO, &g_vSDJSLGTaskHandle, tskNO_AFFINITY );
   xTaskCreatePinnedToCore( vSDAVGLGTask, "SDAVGLG", 6*1024, NULL, SDAVGLG_TASK_PRIO, &g_vSDAVGLGTaskHandle, tskNO_AFFINITY );
   //Create and start stats task
-  xTaskCreatePinnedToCore(vStatsTask, "STATS", 2048, NULL, STATS_TASK_PRIO, &g_vStatsTaskHandle, tskNO_AFFINITY);
+  xTaskCreatePinnedToCore(vStatsTask, "STATS", 3072, NULL, STATS_TASK_PRIO, &g_vStatsTaskHandle, tskNO_AFFINITY);
 
 }
 
