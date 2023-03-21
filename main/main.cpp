@@ -82,6 +82,9 @@ BH1750 g_lightMeter(BH1750_ADDR);
 ANEMO g_windMeter(ANEMO_ADDR);
 Adafruit_BMP280 g_pressureMeter(&Wire1); // I2C
 Adafruit_SSD1306 g_display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, OLED_RESET);
+#ifdef EXTERNAL_SENSOR_HTU21
+Adafruit_HTU21DF g_htu21 = Adafruit_HTU21DF();
+#endif
 
 //SD Card global object
 sdmmc_card_t * g_card;
@@ -175,6 +178,16 @@ void app_main(void){
   }else{
     ESP_LOGI(TAG, "BMP280 Pressure meter initialized.");
   }
+
+  #ifdef EXTERNAL_SENSOR_HTU21
+  //HTU21 Initialization
+  if(!g_htu21.begin(&Wire1)){
+    ESP_LOGE(TAG, "HTU21 initialization failed!");
+    //for(;;); // Don't proceed, loop forever
+  }else{
+    ESP_LOGI(TAG, "HTU21 Pressure meter initialized.");
+  }
+  #endif
 
   //RTC Initialization
   if(!g_rtc.begin(&Wire1)){

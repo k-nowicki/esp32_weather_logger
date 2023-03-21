@@ -27,6 +27,10 @@
 //GPIO_12 - bootstrap
 //GPIO_04 -
 
+//Uncomment right external temp and humidity sensor- analog DHT11 or I2C HTU21
+//#define EXTERNAL_SENSOR_DHT11
+#define EXTERNAL_SENSOR_HTU21
+
 //DHT11 sensor line
 #define GPIO_DHT11    GPIO_NUM_33
 //DS18B20 sensor line

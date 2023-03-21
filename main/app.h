@@ -22,6 +22,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_BMP280.h>
+#include <Adafruit_HTU21DF.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include <dht11.h>
 #include <BH1750.h>
@@ -65,6 +66,9 @@ extern BH1750 g_lightMeter;
 extern ANEMO g_windMeter;
 extern Adafruit_BMP280 g_pressureMeter; // I2C
 extern Adafruit_SSD1306 g_display;
+#ifdef EXTERNAL_SENSOR_HTU21
+extern Adafruit_HTU21DF g_htu21;
+#endif
 
 //SD Card global object
 extern sdmmc_card_t * g_card;

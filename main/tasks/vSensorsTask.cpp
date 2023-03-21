@@ -59,13 +59,21 @@
 void vSensorsTask(void*){
   measurement tmp_measurements;
   while (1) {
-    float itemp, lux, pres, alti;
+    float itemp, etemp, humi, lux, pres, alti;
+
+    // Read all fast sensors
     lux = g_lightMeter.readLightLevel();
     itemp = g_pressureMeter.readTemperature();
     pres = g_pressureMeter.readPressure();
     alti = g_pressureMeter.readAltitude(1013.25);
+    #ifdef EXTERNAL_SENSOR_HTU21
+    etemp = g_htu21.readTemperature();
+    humi = g_htu21.readHumidity();
+    #endif
 
-    // Read all fast sensors
+    tmp_measurements.eTemp = isnan(etemp) ? 0.0 : etemp;
+    tmp_measurements.humi =  isnan(humi) ? 0.0 : humi;
+    tmp_measurements.dht_status = (isnan(humi) || isnan(etemp)) ? -2 : 0;
     tmp_measurements.lux = (lux == -1 || lux > 65000) ? 0.0 : lux;
     tmp_measurements.iTemp = isnan(itemp) ? 0.0 : itemp;
     tmp_measurements.pres = isnan(pres) ? 0.0 : pres/100;

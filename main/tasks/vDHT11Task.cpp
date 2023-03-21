@@ -67,9 +67,11 @@
  */
 void vDHT11Task(void*){
   measurement tmp_measurements;
-  dht11_reading dht_read;
   float wind = 0;
   while (1) {
+
+    #ifdef EXTERNAL_SENSOR_DHT11
+    dht11_reading dht_read;
     dht_read = DHT11_read();
     //update status of last read
     tmp_measurements.dht_status = dht_read.status;
@@ -79,14 +81,17 @@ void vDHT11Task(void*){
       tmp_measurements.eTemp = dht_read.temperature;
       tmp_measurements.humi = dht_read.humidity;
     }
+    #endif
     //read also wind speed
     wind = g_windMeter.readWind();
     tmp_measurements.wind = (wind < 0) ? 0.0 : wind;  //do not pass error as reading
     //store measurements in curr_measures
     xSemaphoreTake(g_current_measuers_mutex, portMAX_DELAY);
+    #ifdef EXTERNAL_SENSOR_DHT11
     g_curr_measures.eTemp = tmp_measurements.eTemp;
     g_curr_measures.humi = tmp_measurements.humi;
     g_curr_measures.dht_status = tmp_measurements.dht_status;
+    #endif
     g_curr_measures.wind = tmp_measurements.wind;
     xSemaphoreGive(g_current_measuers_mutex);
     vTaskDelay(pdMS_TO_TICKS(1000));

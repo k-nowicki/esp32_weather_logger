@@ -79,6 +79,11 @@ measurement get_latest_measurements(void){
  */
 void store_measurements(measurement measures){
   xSemaphoreTake(g_current_measuers_mutex, portMAX_DELAY);
+  #ifdef EXTERNAL_SENSOR_HTU21
+  g_curr_measures.eTemp = measures.eTemp;
+  g_curr_measures.humi = measures.humi;
+  g_curr_measures.dht_status = measures.dht_status;
+  #endif
   g_curr_measures.lux = measures.lux;
   g_curr_measures.iTemp = measures.iTemp;
   g_curr_measures.pres = measures.pres;
