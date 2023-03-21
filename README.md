@@ -5,6 +5,9 @@ All user interactions are made by web interface. Besides display and on/off swit
 The purpose of the device is to deliver historical weather informations along with pictures of those conditions, for further analysis.
 Device can be used as weather conditions logger, time-lapse camera or just home weather station.
 
+<img src="extras/pics/DSC01369.jpg" height="340"/> <img src="extras/pics/DSC01370.jpg" height="340"/><img src="extras/pics/DSC01362.jpg" height="340"/> 
+
+
 ## Hardware
 
 |  Type | Name/Info  | Libs  |
@@ -39,7 +42,6 @@ This project needs ESP-IDF environment installed on development machine (develop
 Instructions on how to connect and flash esp32 can be found also on [espressif docs](https://docs.espressif.com/projects/esp-idf/en/v3.3.5/get-started-cmake/index.html#step-9-flash-to-a-device "espressiff docs").
 
 ## Project status: under development
- This project is still under development. Not all features mentioned above are implemented yet.
  
  What is implemented:
   - OLED Display displays current measurements, date, time and IP address
@@ -77,7 +79,8 @@ Replace <code>\<COM_PORT></code> with that in your setup, for example COM4 on Wi
 
 If everything done correctly, you should see immediately debug output on the serial monitor.
 After several seconds there should be all measurements, date, time and IP address of the station visible on the display.
-You can now use this IP to open device web page.
+You can now use this IP to open device web page. Remember that only https protocol works, put <code>https://</code> before IP in your browser! 
+It may be also necessary to confirm unsafe access in the browser, as device has no proper third-party certificate installed.
  
 
 
@@ -86,3 +89,6 @@ As a weather station the device needs to be directly exposed to weather conditio
 I designed enclosure for 3d printing. Files in stl format can be found in extras/case.
 Enclosure is designed with 25,4mm x 76,2mm glass window that utilizes standard 1x3 inch microscope slides. 
 The best slides are one side matted which works as diffuser for light sensor.
+
+## Web Interface
+<img src="extras/pics/index_page.png" height="1241"/> <img src="extras/pics/history_page.png" height="1241"/> 
