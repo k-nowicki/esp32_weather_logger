@@ -87,12 +87,11 @@ void vDisplayTask(void *arg){
     g_display.setCursor(0, 0);     // Start at top-left corner
     g_display.printf("%0d-%02d-%04d  %02d:%02d:%02d\n", timeinfo.tm_mday, timeinfo.tm_mon+1,
                    timeinfo.tm_year+1900, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
-    g_display.printf("Intern T: %3.2F %cC\n", tmp_measurements.iTemp,'\xF8');
-    g_display.printf("Extern T: %3.2F %cC\n", tmp_measurements.eTemp,'\xF8');
-    g_display.printf("Humidity: %d%%\n", (int)tmp_measurements.humi);
-    g_display.printf("Sun expo: %5.2F Lux\n", tmp_measurements.lux);
+    g_display.printf("I: %3.1F E: %3.1F %cC\n", tmp_measurements.iTemp, tmp_measurements.eTemp, '\xF8');
+    g_display.printf("Humi: %d%% Wind: %3.1f\n", (int)tmp_measurements.humi, tmp_measurements.wind);
     g_display.printf("Pressure: %4.2f hPa\n", tmp_measurements.pres);
-    g_display.printf("Altitude: %5.2Fm\n", tmp_measurements.alti);
+    g_display.printf("Sun: %5.2F Lux\n", tmp_measurements.lux);
+//    g_display.printf("Altitude: %5.2Fm\n", tmp_measurements.alti);
     g_display.printf("IP: " IPSTR, IP2STR(&ip.ip));
     g_display.display();
   }

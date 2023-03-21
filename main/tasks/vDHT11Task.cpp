@@ -68,6 +68,7 @@
 void vDHT11Task(void*){
   measurement tmp_measurements;
   dht11_reading dht_read;
+  float wind = 0;
   while (1) {
     dht_read = DHT11_read();
     //update status of last read
@@ -79,7 +80,8 @@ void vDHT11Task(void*){
       tmp_measurements.humi = dht_read.humidity;
     }
     //read also wind speed
-    tmp_measurements.wind = g_windMeter.readWind();
+    wind = g_windMeter.readWind();
+    tmp_measurements.wind = (wind < 0) ? 0.0 : wind;  //do not pass error as reading
     //store measurements in curr_measures
     xSemaphoreTake(g_current_measuers_mutex, portMAX_DELAY);
     g_curr_measures.eTemp = tmp_measurements.eTemp;

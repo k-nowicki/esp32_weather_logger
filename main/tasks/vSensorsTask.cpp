@@ -66,12 +66,12 @@ void vSensorsTask(void*){
     alti = g_pressureMeter.readAltitude(1013.25);
 
     // Read all fast sensors
-    tmp_measurements.lux = (lux == -1) ? 0.0 : lux;
+    tmp_measurements.lux = (lux == -1 || lux > 65000) ? 0.0 : lux;
     tmp_measurements.iTemp = isnan(itemp) ? 0.0 : itemp;
     tmp_measurements.pres = isnan(pres) ? 0.0 : pres/100;
     tmp_measurements.alti = isnan(alti) ? 0.0 : alti;
     store_measurements(tmp_measurements);   //Store in global curr_measures
 
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(150)); //BH1750 has 120ms avg measurement time, bmp280 about 6ms
   }
 }

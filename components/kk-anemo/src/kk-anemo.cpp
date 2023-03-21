@@ -89,8 +89,8 @@ float ANEMO::readWind() {
 
   // Measurement result will be stored here
   float velocity = -1.0;
-  uint16_t h_value;
-  uint16_t l_value;
+  uint8_t h_value = 0;
+  uint8_t l_value = 0;
 
   // Read two bytes from the sensor, which are low and high parts of the sensor
   // value
@@ -100,17 +100,19 @@ float ANEMO::readWind() {
     tmp;                    //has effect- no warning of not used variable tmp :)
     h_value = __wire_read();
     l_value = __wire_read();
-    velocity = h_value + (float)((l_value*1000)/256)/1000;
+
+    //h_value should never be higher than 200 - it indicates error
+    if(h_value < 200 ){
+      velocity = h_value + (float)((l_value*1000)/256)/1000;
+    }
   }
 
   if (velocity != -1.0) {
 // Print raw value if debug enabled
 #ifdef ANEMO_DEBUG
-    Serial.print(F("[ANEMO] Raw value: "));
-    Serial.println(velocity);
+    printf("[ANEMO] Raw value high: %d low: %d\n", h_value, l_value);
 // Print converted value if debug enabled
-    Serial.print(F("[ANEMO] Converted float value: "));
-    Serial.println(velocity);
+    printf("[ANEMO] Converted float value: %f m/s\n", velocity);
 #endif
   }
 
